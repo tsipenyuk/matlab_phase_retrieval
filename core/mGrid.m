@@ -55,11 +55,11 @@ classdef mGrid
         %    >> mGrid('nPoints',10)
         %
         % Creates MGRID, 2-dim. In the object space:
-        % 10 pts. in the first dimension linearly spaced between 0 and 20,
-        % 45 pts in the second dimension linearly spaced between 5 and 40.
+        %   10 pts. in the first dimension linearly spaced between 0 and 20,
+        %   45 pts in the second dimension linearly spaced between 5 and 40.
         % In the Fourier space: 
-        % 10 pts. in the first dimension linearly spaced between 1 and 10,
-        % 45 pts. in the first dimension linearly spaced between 1 and 45
+        %   10 pts. in the first dimension linearly spaced between 1 and 10,
+        %   45 pts. in the first dimension linearly spaced between 1 and 45
         %    >> a = mGrid('nPoints',[10 45], ...
         %                'xMin',[0 5], 'xMax', [20 40], ...
         %                'kMin', [1 1], 'kMax', [10 45]) 

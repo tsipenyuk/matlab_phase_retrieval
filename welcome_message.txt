@@ -5,10 +5,11 @@
                                 March 31, 2016
 --------------------------------------------------------------------------------
 
-Welcome to Phase Retrieval Sandbox! If you have started your matlab session in
-the phase_retrieval root folder (i.e. '<your_path>/phase_retrieval'), you should
-be ready to go. You may want to try the following:
+Welcome to the Matlab Phase Retrieval Sandbox! If you have started
+your Matlab session in the phase_retrieval root folder
+(i.e. '<your_path>/phase_retrieval'), you should be ready to go. You
+may want to try the following:
 
-    % Create a grid at which the density and FT of the molecule 
-    % will be evaluated:
-    >> g = mGrid( 'xAxes', {1:2:10, 1:3:10})
+% Create a grid at which the density and FT of the molecule will
+% be evaluated: 
+>> g = mGrid( 'xAxes', {1:2:10, 1:3:10})
