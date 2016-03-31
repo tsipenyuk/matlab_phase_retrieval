@@ -1,4 +1,4 @@
-#Matlab Phase Retrieval Sandbox
+##Matlab Phase Retrieval Sandbox
 ----------------------------------------------------------------------------
 
 Matlab Phase Retrieval Sandbox is a collection of scripts and utilities for
