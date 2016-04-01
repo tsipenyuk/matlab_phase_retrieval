@@ -12,4 +12,6 @@ may want to try the following:
 
 % Create a grid at which the density and FT of the molecule will
 % be evaluated: 
->> g = mGrid( 'xAxes', {1:2:10, 1:3:10})
+>> g = mGrid( 'xAxes', {1:0.2:10, 1:0.3:10})
+% Evaluate sin function at the resulting grid
+>> surf(sin(g.xMeshgrid{1} - g.xMeshgrid{2}))

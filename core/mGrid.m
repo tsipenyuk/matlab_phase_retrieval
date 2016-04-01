@@ -22,6 +22,12 @@ classdef mGrid
 %                   in each dimension.
 %   obj.kAxes     - cf. obj.xAxes; explanation applies mutatis
 %                   mutandis.
+%   obj.xMeshgrid - a full grid created using entries of xAxes;
+%                   suited for evaluation of functions in the
+%                   object space    
+%   obj.kMeshgrid - --//--                    entries of kAxes
+%                   --//--
+%                   Fourier space    
 %
 % For examples, type 'doc mGrid' and see Constructor info.
     properties
@@ -33,6 +39,8 @@ classdef mGrid
         kMax
         xAxes
         kAxes
+        xMeshgrid
+        kMeshgrid
     end
     methods
         function obj=mGrid(varargin)
@@ -225,8 +233,23 @@ classdef mGrid
                     obj.kMin = cellfun(@min, obj.kAxes);
                     obj.kMax = cellfun(@max, obj.kAxes);
                 end
-            
             end % End of the second method
+            
+            if obj.dimension == 1
+                obj.xMeshgrid = obj.xAxes{1};
+                obj.kMeshgrid = obj.kAxes{1};
+            elseif obj.dimension == 2
+                obj.xMeshgrid = cell(1, obj.dimension);
+                obj.kMeshgrid = cell(1, obj.dimension);
+                [obj.xMeshgrid{1}, obj.xMeshgrid{2}] = ...
+                    meshgrid(obj.xAxes{1}, obj.xAxes{2});
+                [obj.kMeshgrid{1}, obj.kMeshgrid{2}] = ...
+                    meshgrid(obj.kAxes{1}, obj.kAxes{2});
+            else
+                error(strcat('Dimension ', num2str(obj.dimension)', ...
+                             ['is not supported. Meshgrids could not ' ...
+                              'have been created.']));
+            end
         end % End of the constructor
     end % End of class methods
 end % End of the class
