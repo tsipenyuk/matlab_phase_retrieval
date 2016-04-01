@@ -4,7 +4,7 @@
 Matlab Phase Retrieval Sandbox is a collection of scripts and utilities for
 developement and testing of phase retrieval algorithms. 
 
-There are no stable releases available yet. The code is in developement.
+There are no stable releases available yet.
 
 ###Installation
 1. Download the repository.
