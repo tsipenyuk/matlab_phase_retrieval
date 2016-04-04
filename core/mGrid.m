@@ -134,7 +134,6 @@ classdef mGrid
                         obj.dimension = size(p.Results.kMin,2);
                     elseif any(strmatch('kMax',str_varargin))
                         obj.dimension = size(p.Results.kMax,2);
-                        obj.kMax = p.Results.kMax;
                     end
                     
                     % If explicitely stated, set kMin and kMax
@@ -142,9 +141,13 @@ classdef mGrid
                             any(strmatch('kMax',str_varargin))
                         obj.kMin = p.Results.kMin;                    
                         obj.kMax = p.Results.kMax;
-                    else
+                    elseif xor(any(strmatch('kMin',str_varargin)), ...
+                            any(strmatch('kMax',str_varargin)))
                         error(['Both (or none) of the arguments kMin, ' ...
                                'kMax must be specified.'])
+                    else
+                        obj.kMin = p.Results.kMin;
+                        obj.kMax = p.Results.kMax;
                     end
                 else
                     obj.dimension = default_dimension;
