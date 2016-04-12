@@ -146,8 +146,13 @@ classdef mGrid
                         error(['Both (or none) of the arguments kMin, ' ...
                                'kMax must be specified.'])
                     else
-                        obj.kMin = p.Results.kMin;
-                        obj.kMax = p.Results.kMax;
+                        % in case only nPoints is specified,
+                        % everything else is set to correspond
+                        obj.nPoints = p.Results.nPoints;
+                        obj.xMin = p.Results.xMin;
+                        obj.xMax = p.Results.xMax;
+                        obj.kMin = [1];
+                        obj.kMax = [obj.nPoints];
                     end
                 else
                     obj.dimension = default_dimension;

@@ -2,33 +2,11 @@ classdef molecule
 % MOLECULE describes a molecule (its density and its Fourier transform).
 %
 % Contains the following attributes:
-%   obj.dimension - dimension of the problem (1, 2, or 3)
-%   obj.nPoints   - array with size (1, obj.dimension), contains
-%                   number of points in each dimension.
-%   obj.xMin      - array with size (1, obj.dimension), contains
-%                   lower bounds of the grid in the object space
-%   obj.xMax      - --//--
-%                   upper bounds of the grid in the object space
-%   obj.kMin      - --//--
-%                   lower bounds of the grid in the Fourier space
-%   obj.kMax      - --//--
-%                   upper bounds of the grid in the Fourier space
-%   obj.xAxes     - cell array with size {1, obj.dimension},
-%                   contains arrays of size (1,n), where n is a 
-%                   corresponding number of points specified in 
-%                   obj.nPoints. Elements of obj.xAxes are linear
-%                   interpolations between obj.xMin and obj.xMax 
-%                   in each dimension.
-%   obj.kAxes     - cf. obj.xAxes; explanation applies mutatis
-%                   mutandis.
-%   obj.xMeshgrid - a full grid created using entries of xAxes;
-%                   suited for evaluation of functions in the
-%                   object space    
-%   obj.kMeshgrid - --//--                    entries of kAxes
-%                   --//--
-%                   Fourier space    
+%   obj.grid      - class mGrid, stores dimension and grids
+%   obj.density   - array storing the dencity of the molecule
+%   obj.ft      - array storing the Fourier transform of the molecule
 %
-% For examples, type 'doc mGrid' and see Constructor info.
+% For examples, type 'doc molecule' and see Constructor info.
 % <NOT FINISHED>
     properties
         grid
@@ -38,6 +16,12 @@ classdef molecule
     methods
         function obj=molecule(varargin)
         % MOLECULE Creates a molecule from density or fourier transform.
+        %
+        % When the instance of the class is created, one must provide
+        % either the density or the FT; otherwise, the default
+        % 1-dim. density is used. If the density is
+        % one-dimensional, a 'grid' object is created
+        % automatically.
         %
         % Examples
         %
@@ -85,11 +69,11 @@ classdef molecule
             if any(strmatch('density',str_varargin))
                 obj.density = p.Results.density;
                 obj.ft = fftn(obj.density);
-                obj.grid = mGrid('nPoints', length(obj.density))
+                obj.grid = mGrid('nPoints', length(obj.density));
             elseif any(strmatch('ft',str_varargin))
                 obj.ft = p.Results.ft;
                 obj.density = real(ifftn(obj.ft));
-                obj.grid = mGrid('nPoints', length(obj.ft))
+                obj.grid = mGrid('nPoints', length(obj.ft));
             else
                 disp(['Input density or FT were not specified. ' ...
                       'Proceeding with default density (Gaussian, ' ...
@@ -103,15 +87,37 @@ classdef molecule
                 obj.grid = p.Results.grid;
             else
                 disp('(Warning: grid was not specified.)');
-                if length(str_varargin) == 0
-                    disp(['(Using the default grid, 200 pts between ' ...
-                          '0 and 2*pi.)']);
-                    obj.grid = p.Results.grid;
-                else
-                    disp(['(Using the default grid linearly spaced between ' ...
-                          '0 and 2*pi.)']);
+                if isvector(obj.density)
+                    if length(str_varargin) == 0
+                        disp(['(Using the default grid, 200 pts between ' ...
+                              '0 and 2*pi.)']);
+                        obj.grid = p.Results.grid;
+                    else
+                        disp(['(Using the default grid linearly spaced '...
+                              'between 0 and 2*pi.)']);
+                        obj.grid = mGrid('nPoints', length(obj.density))
+                    end
+                else 
+                    disp(['(Creating a default grid; in object space, '...
+                           'box with linearly spaced stencils between '...
+                           '0 and 2pi.)'])
+                    dim = length(size(obj.density));
+                    % For two axes x1 and x2 with lengths i and j,
+                    % meshgrid yields
+                    % result with size [j  i]. fliplr() accounts
+                    % for that dimension mixture
+                    custom_size = fliplr(size(obj.density));
+                    custom_nPoints = custom_size;
+                    custom_xMin = zeros(1, dim);
+                    custom_xMax = 2 * pi * ones(1, dim);
+                    custom_kMin = ones(1, dim);
+                    custom_kMax = custom_size;
+                    grid = mGrid('nPoints', custom_nPoints, ...
+                                 'xMin', custom_xMin, 'xMax', custom_xMax, ...
+                                 'kMin', custom_kMin, 'kMax', ...
+                                 custom_kMax); 
+                    obj.grid = grid;
                 end
-
             end
         end
 
@@ -199,9 +205,9 @@ classdef molecule
                            max(obj.grid.xAxes{1}) ...
                            min(obj.density)...
                            max(obj.density)])
-                ax1.XTick = [0 pi/2 pi  3*pi/2 2*pi];
-                ax1.XTickLabel = {'0', '\pi/2', '\pi',  '3\pi/2', ...
-                                  '2\pi'};
+                %ax1.XTick = [0 pi/2 pi  3*pi/2 2*pi];
+                %ax1.XTickLabel = {'0', '\pi/2', '\pi',  '3\pi/2', ...
+                %                  '2\pi'};
                 title(ax1,'\fontsize{12}Density')
 
                 
@@ -227,13 +233,140 @@ classdef molecule
                 hold off
                 
             elseif obj.grid.dimension == 2
-                surf(obj.grid.xMeshgrid{1}, obj.grid.xMeshgrid{2}, ...
-                     obj.density)
+                p = inputParser;
+                
+                addOptional(p,'ax1',0);
+                addOptional(p,'ax2',0);
+                addOptional(p,'ax3',0);
+                
+                parse(p,varargin{:});
+                
+                if length(varargin) == 3
+                    ax1 = p.Results.ax1;
+                    ax2 = p.Results.ax2;
+                    ax3 = p.Results.ax3;
+                elseif length(varargin) == 0
+                    fig = figure();
+                    subplot(2,2,1)
+                    ax1 = gca();
+                    subplot(2,2,2)
+                    ax2 = gca();
+                    subplot(2,2,3)
+                    ax3 = gca();
+                else
+                    disp(strcat(...
+                        ['You must provide either three optional arguments ' ...
+                         '(ax1, ax2, ax3 handles to axes where the ' ...
+                         'density and FT modulus and phase' ...
+                         '  will be plotted), or none. ' ...
+                         'Provided: '], ...
+                        str(varargin), ', i.e. ', str(length(varargin)), ...
+                        ' arguments.'))
+                end
+
+                
+                colormap linear_bgyw_15_100_c68_n256
+                
+                % 1st axis
+                image(ax1, obj.grid.xAxes{1}, obj.grid.xAxes{2}, ...
+                       obj.density, 'CDataMapping', 'scaled')
+                %axis equal tight
+                title(ax1,'\fontsize{12}Density')
+                colormap(linear_bgyw_15_100_c68_n256)
+                colorbar(ax1)
+
+                % 1st axis
+                image(ax2, obj.grid.kAxes{1}, obj.grid.kAxes{2}, ...
+                       abs(fftshift(obj.ft)), 'CDataMapping', 'scaled')
+                %axis equal tight
+                title(ax2,'\fontsize{12}FT modulus')
+                colormap(linear_bgyw_15_100_c68_n256)
+                colorbar(ax2)
+                
+                % 3nd axis
+                image(ax3, obj.grid.kAxes{1}, obj.grid.kAxes{2}, ...
+                       angle(fftshift(obj.ft)), 'CDataMapping', 'scaled')
+                %axis equal tight                
+                title(ax3,'\fontsize{12}FT phase')
+                colormap(ax3, cyclic_mygbm_30_95_c78_n256)
+                colorbar(ax3)
+            
             else
                 disp(['Currently, only 1-dimensional plotting method ' ...
                       'is supported'])
             end
         end
+
         
+        function contour(obj, varargin)
+        % CONTOUR plotting routine for 2-dim molecule density and its FT
+        %
+        % Optional arguments: axes handles to axes where the
+        % density and the FT modulus and phase will be plotted
+        if obj.grid.dimension == 2
+            p = inputParser;
+            
+            addOptional(p,'ax1',0);
+            addOptional(p,'ax2',0);
+            addOptional(p,'ax3',0);
+            
+            parse(p,varargin{:});
+                
+            if length(varargin) == 3
+                ax1 = p.Results.ax1;
+                ax2 = p.Results.ax2;
+                ax3 = p.Results.ax3;
+            elseif length(varargin) == 0
+                fig = figure();
+                subplot(2,2,1)
+                ax1 = gca();
+                subplot(2,2,2)
+                ax2 = gca();
+                subplot(2,2,3)
+                ax3 = gca();
+            else
+                disp(strcat(...
+                    ['You must provide either three optional arguments ' ...
+                     '(ax1, ax2, ax3 handles to axes where the ' ...
+                     'density and FT modulus and phase' ...
+                     '  will be plotted), or none. ' ...
+                     'Provided: '], ...
+                    str(varargin), ', i.e. ', str(length(varargin)), ...
+                    ' arguments.'))
+            end
+            
+            
+            colormap linear_bgyw_15_100_c68_n256
+            
+            % 1st axis
+            contour(ax1, obj.grid.xAxes{1}, obj.grid.xAxes{2}, ...
+                  obj.density)
+            %axis equal tight
+            title(ax1,'\fontsize{12}Density')
+            colormap(linear_bgyw_15_100_c68_n256)
+            colorbar(ax1)
+            
+            % 1st axis
+            contour(ax2, obj.grid.kAxes{1}, obj.grid.kAxes{2}, ...
+                  abs(fftshift(obj.ft)))
+            %axis equal tight
+            title(ax2,'\fontsize{12}FT modulus')
+            colormap(linear_bgyw_15_100_c68_n256)
+            colorbar(ax2)
+            
+            % 3nd axis
+            contour(ax3, obj.grid.kAxes{1}, obj.grid.kAxes{2}, ...
+                  angle(fftshift(obj.ft)))
+            %axis equal tight                
+            title(ax3,'\fontsize{12}FT phase')
+            colormap(ax3, cyclic_mygbm_30_95_c78_n256)
+            colorbar(ax3)
+            
+            else
+                disp(['Currently, only 2-dimensional contour plot ' ...
+                      'is supported'])
+            end
+        end
+
     end
 end
