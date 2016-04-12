@@ -13,5 +13,10 @@ There are no stable releases available yet.
 tutorial on how to use this package.
 
 
+###Licensing
+All the code in the folder 'lib' and folders therein is developed by 
+other parties.
+The corresponding author credits, licensing information, and links to the original source code are stored in files 'lib\*\README.md'
+
 ----------------------------------------------------------------------------
 (c) 2016 Arseniy Tsipenyuk (TUM M7)
