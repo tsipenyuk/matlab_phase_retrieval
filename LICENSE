@@ -1,3 +1,12 @@
+Warning
+
+The following license does not apply to the parts of this software stored 
+in the directory 'lib' and its subdirectories. The software stored in the 
+directory 'lib' and its subdirectories is subject to other licenses. The 
+corresponding licensing information may be found in 'README.md' files 
+in the directory 'lib' and directories therein.
+
+
 The MIT License (MIT)
 
 Copyright (c) 2016 Arseniy Tsipenyuk
