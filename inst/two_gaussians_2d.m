@@ -15,5 +15,6 @@ w2 = {0.1 0.4};
 density = 0.5 * exp(-(x{1} - m1{1}).^2 ./ w1{1} -(x{2} - m1{2}).^2 ./ w1{2} )...
           + exp(-(x{1} - m2{1}).^2 ./ w2{1} -(x{2} - m2{2}).^2 ./ w2{2} );
 m = molecule('density', density, 'grid', g);
+disp('Created an instance "m" of class molecule.')
 m.contour();
 

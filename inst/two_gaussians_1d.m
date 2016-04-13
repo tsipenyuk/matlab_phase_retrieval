@@ -13,5 +13,6 @@ w2 = 0.1;
 
 density = 0.5 * exp(-(x - m1).^2 / w1) + exp(-(x - m2).^2 / w2);
 m = molecule('density', density, 'grid', g);
+disp('Created an instance "m" of class molecule.')
 m.plot();
 
