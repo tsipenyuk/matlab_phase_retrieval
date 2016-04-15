@@ -18,8 +18,8 @@ All the code in the folder 'lib' and folders therein is developed by
 other parties.
 The corresponding author credits, licensing information, and links to the original source code are stored in files 'lib\*\README.md'
 
-###Structure
-phase_retrieval
+###Structure  
+phase_retrieval  
 |-- cls  - contains definitions of classes that describe molecules and algorithms.  
 |-- fun  - contains functions (class-independent), such as projections and algorithm update steps.  
 |-- inst - contains scripts that instantiate various classes; simplifies matlab-shell use of the code.  
