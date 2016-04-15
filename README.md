@@ -28,7 +28,7 @@ phase_retrieval
 The code is split into procedural part ('fun') and object-oriented part ('cls', 'inst'). The procedural part
 does not depend on any objects --- it contains algorithm updates (such as ER update) and auxilary functions 
 (such as projections onto constraint sets). The object-oriented part is introduced to ease instantiation
-and plotting for case studies.
+and plotting of case studies.
 
 ----------------------------------------------------------------------------
 (c) 2016 Arseniy Tsipenyuk (TUM M7)
