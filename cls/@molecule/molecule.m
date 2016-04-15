@@ -122,31 +122,31 @@ classdef molecule
         end
 
         
-        function set_density(obj, density)
+        function obj = set_density(obj, density)
             obj.density = density;
             obj.ft = fftn(obj.density);
         end
 
         
-        function set_ft(obj, ft)
+        function obj = set_ft(obj, ft)
             obj.ft = ft;
             obj.density = real(ifftn(obj.ft));
         end
 
         
-        function set_phase(obj, phase)
+        function obj = set_phase(obj, phase)
             obj.ft = abs(obj.ft) .* exp(1j * phase);
             obj.density = real(ifftn(obj.ft));
         end
         
         
-        function set_random_phase(obj)
+        function obj = set_random_phase(obj)
             random_phase = 2 * pi * rand(size(obj.ft));
-            obj.set_phase(random_phase);
+            obj = obj.set_phase(random_phase);
         end
         
         
-        function set_zero_phase(obj, phase)
+        function obj = set_zero_phase(obj, phase)
             obj.ft = abs(obj.ft);
             obj.density = real(ifftn(obj.ft));
         end
