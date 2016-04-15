@@ -23,7 +23,7 @@ phase_retrieval
 |-- cls  - contains definitions of classes that describe molecules and algorithms.  
 |-- fun  - contains functions (class-independent), such as projections and algorithm update steps.  
 |-- inst - contains scripts that instantiate various classes; simplifies matlab-shell use of the code.  
-|-- lib  - contains third-party code.  
+|-- lib  - contains third-party software.  
   
 The code is split into procedural part ('fun') and object-oriented part ('cls', 'inst'). The procedural part
 does not depend on any objects --- it contains algorithm updates (such as ER update) and auxilary functions 
