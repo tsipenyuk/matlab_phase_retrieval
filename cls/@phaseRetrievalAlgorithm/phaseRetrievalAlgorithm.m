@@ -44,29 +44,29 @@ classdef phaseRetrievalAlgorithm
             % measured signal.
             obj.update_function = update_function_;
             
-            if isa(solution_, 'molecule'):
+            if isa(solution_, 'molecule')
                 obj.solution = solution_;
                 obj.ftmod = abs(obj.solution.ft);
 
                 % Set the initial approximation
-                disp(['Using initial phase 0. You may set phase using the' ...
-                 '"obj = obj.initial.set_phase(...)" statement.']);
+                disp('Info: Using initial phase 0. You may set phase using')
+                disp('>> obj = obj.initial.set_phase(...)');
                 obj.initial = molecule('ft', obj.ftmod, ...
                                        'grid', obj.solution.grid);
                
                 disp(['Info: the exact solution of the problem was' ...
-                      ' specified.')']
+                      ' specified.']);
             else
                 obj.solution = 'None';
                 obj.ftmod = solution_;
 
                 % Set the initial approximation
-                disp(['Using initial phase 0. You may set phase using the' ...
-                 '"obj = obj.initial.set_phase(...)" statement.']);
+                disp('Info: Using initial phase 0. You may set phase using')
+                disp('>> obj = obj.initial.set_phase(...)');
                 obj.initial = molecule('ft', obj.ftmod);
 
                 disp(['Info: the exact solution of the problem was' ...
-                      ' not specified. Proceeding with FT modulus...')']
+                      ' not specified. Proceeding with FT modulus...']);
             end
             
             obj.current = obj.initial;
@@ -76,12 +76,12 @@ classdef phaseRetrievalAlgorithm
             if nargin == 2
                 obj.update_params = 'None';
             else
-                obj.update_params = update_params;
+                obj.update_params = update_params_;
             end
         end
         
         function obj = update(obj, num_updates)
-            if obj.update_params == 'None':
+            if obj.update_params == 'None'
                 for i = 1 : 1 : num_updates
                     [new_density, new_energy] = update(obj.current.density, ...
                                                        obj.ftmod);

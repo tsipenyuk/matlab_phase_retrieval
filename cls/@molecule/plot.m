@@ -61,7 +61,7 @@ function plot(obj, varargin)
         
         
         % 2nd axis
-        yyaxis left
+        yyaxis(ax2, 'left')
         plot(ax2, obj.grid.kAxes{1}, abs(fftshift(obj.ft)))
         try
             axis(ax2, [min(obj.grid.kAxes{1}) ...
@@ -72,7 +72,7 @@ function plot(obj, varargin)
         title(ax2,'\fontsize{12}FT: modulus and phase')
         
         % 3nd axis
-        yyaxis right
+        yyaxis(ax2, 'right')
         plot(ax2, obj.grid.kAxes{1}, ...
              angle(fftshift(obj.ft)))
         try

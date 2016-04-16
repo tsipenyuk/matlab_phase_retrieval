@@ -21,7 +21,7 @@ function plot(obj, varargin)
 %   >> subplot(2,2,4)
 %   >> ax2 = gca
 %   >> m.plot(ax1, ax2)
-    if obj.grid.dimension == 1
+    if obj.current.grid.dimension == 1
         p = inputParser;
         
         addOptional(p,'ax1',0);
@@ -61,9 +61,14 @@ function plot(obj, varargin)
                 ' arguments.'))
         end
         
-        obj.solution.plot(ax1,ax2);
-        obj.current.plot(ax3,ax4);
-        ax5.plot(obj.energy);
+        obj.solution.plot(ax1,ax4);
+        title(ax1,'\fontsize{12}Solution density')
+        title(ax4,'\fontsize{12}Solution FT')
+        obj.current.plot(ax2,ax5);
+        title(ax2,'\fontsize{12}Current density')
+        title(ax5,'\fontsize{12}Current FT')
+        plot(ax3, obj.energy);
+        title(ax3,'\fontsize{12}Energy')
         
     else
         disp(['Currently, only 1-dimensional plotting method ' ...
