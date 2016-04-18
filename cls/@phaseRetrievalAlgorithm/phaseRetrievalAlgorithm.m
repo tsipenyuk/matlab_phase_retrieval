@@ -83,19 +83,17 @@ classdef phaseRetrievalAlgorithm
         function obj = update(obj, num_updates)
             if obj.update_params == 'None'
                 for i = 1 : 1 : num_updates
-                    [new_density, new_energy] = update(obj.current.density, ...
-                                                       obj.ftmod);
-                    obj.current = ...
-                        obj.current.set_density(new_density);
+                    [new_density, new_energy] = ...
+                        obj.update_function(obj.current.density, obj.ftmod);
+                    obj.current = obj.current.set_density(new_density);
                     obj.energy = [obj.energy new_energy];
                 end
             else
                 for i = 1 : 1 : num_updates
-                    [new_density, energy] = update(obj.current.density, ...
-                                                   obj.ftmod, ...
-                                                   update_params);
-                    obj.current = ...
-                        obj.current.set_density(new_density);
+                    [new_density, energy] = ...
+                        obj.update_function(obj.current.density, ...
+                                            obj.ftmod, update_params);
+                    obj.current = obj.current.set_density(new_density);
                     obj.energy = [obj.energy new_energy];
                 end
             end
