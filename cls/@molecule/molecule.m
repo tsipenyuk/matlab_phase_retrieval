@@ -141,7 +141,8 @@ classdef molecule
         
         
         function obj = set_random_phase(obj)
-            random_phase = 2 * pi * rand(size(obj.ft));
+            random_density = rand(size(obj.ft));
+            random_phase = angle(fft(random_density));
             obj = obj.set_phase(random_phase);
         end
         

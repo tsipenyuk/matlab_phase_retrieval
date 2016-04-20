@@ -181,6 +181,9 @@ for m = 4:max_m
         errest = (rate/(1 - rate))*delta;  
         if errest < (atol + rtol*norm(soln,inf))
             break;
+        else
+            disp(['errest: ' num2str(errest,'%10.1e\n')]);
+            disp(['rtol * norm: ' num2str(rtol*norm(soln,inf),'%10.1e\n')]);
         end
     end    
     deltaold = delta;

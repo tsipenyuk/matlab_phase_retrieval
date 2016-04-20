@@ -48,6 +48,7 @@ function fout = myCdf(xin, fin)
     for i = 1 : 1 : length(fin) - 1
         fout(i+1) = fout(i) + fout(i+1) * (xin(i+1) - xin(i));
     end
+    fout = fout - fout(1);
 end % myCdf
 %==========================================================================
 
