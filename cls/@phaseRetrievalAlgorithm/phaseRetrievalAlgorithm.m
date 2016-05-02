@@ -80,8 +80,15 @@ classdef phaseRetrievalAlgorithm
             end
         end
         
+        
+        function obj = set_density(obj, new_density1)
+            obj.initial = obj.initial.set_density(new_density1);
+            obj.current = obj.current.set_density(new_density1);
+        end
+        
+        
         function obj = update(obj, num_updates)
-            if obj.update_params == 'None'
+            if isstr(obj.update_params) % aka update_params == 'None'
                 for i = 1 : 1 : num_updates
                     [new_density, new_energy] = ...
                         obj.update_function(obj.current.density, obj.ftmod);
@@ -90,11 +97,11 @@ classdef phaseRetrievalAlgorithm
                 end
             else
                 for i = 1 : 1 : num_updates
-                    [new_density, energy] = ...
+                    [new_density, new_energy] = ...
                         obj.update_function(obj.current.density, ...
-                                            obj.ftmod, update_params);
+                                            obj.ftmod, obj.update_params);
                     obj.current = obj.current.set_density(new_density);
-                    obj.energy = [obj.energy new_energy];
+                    obj.energy = [obj.energy new_energy]; 
                 end
             end
         end % update(obj, num_updates)

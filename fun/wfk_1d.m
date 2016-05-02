@@ -12,10 +12,10 @@ function [K, uh_k, uh_kmq, uh_kpq, quot_k, phase_k] = wfk_1d(k, q, k_grid, u_hat
     % The term $\sqrt{I} / |\hat u|$ is divergent for small values of
     % $|\hat u|$. To ensure numerical stability, perform a cut-off
     % for large values of the quotient
-    TOL = 1000;
-    quot = sqrtI_0 ./ abs(u_hat_0);
-    quot(quot > TOL) = TOL;
-    quot(quot < -TOL) = -TOL;
+    TOL = 1e5;
+    one_div_u = ones(size(u_hat_0)) ./ abs(u_hat_0);
+    one_div_u(one_div_u > TOL) = TOL;
+    quot = sqrtI_0 .* one_div_u;
     
     % Linear interpolation of the density FT:
     % The interpolation must be two-dimensional to ensure the

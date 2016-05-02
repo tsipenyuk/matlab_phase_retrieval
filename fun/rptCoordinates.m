@@ -6,5 +6,5 @@ function x_rpt = rptCoordinates(left_bd, x_com)
     for i = 1 : 1 : length(x_com)
         x_rpt_long(i+1) = 2 * x_com(i) - x_rpt_long(i);
     end
-    x_rpt = x_rpt_long(2:end)
+    x_rpt = x_rpt_long(2:end);
 end

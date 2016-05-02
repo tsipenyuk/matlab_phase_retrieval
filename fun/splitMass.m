@@ -1,4 +1,4 @@
-function x_pcs = splitMass(num_mass_pieces, x_list, f_list)
+function [x_pcs, F_pcs] = splitMass(num_mass_pieces, x_list, f_list)
 % SPLITMASS Split density function into points with the same partial mass
 %
 % Given discretized function f_list defined on points of x_list.
@@ -43,10 +43,10 @@ end
             
             
 %==== Function used to calculate the cumulative distribution function ====
-function fout = myCdf(xin, fin)
+function fout = myCdf(xin, fin) % Trapezregel
     fout = fin;
     for i = 1 : 1 : length(fin) - 1
-        fout(i+1) = fout(i) + fout(i+1) * (xin(i+1) - xin(i));
+        fout(i+1) = fout(i) + (fin(i+1) + fin(i)) / 2 * (xin(i+1) - xin(i));
     end
     fout = fout - fout(1);
 end % myCdf
