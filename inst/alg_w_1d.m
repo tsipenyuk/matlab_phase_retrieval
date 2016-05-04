@@ -3,7 +3,7 @@
 
 update_params.x_list = m.grid.xAxes{1};
 update_params.k_list = m.grid.kAxes{1};
-update_params.h = 1e-6;
+update_params.h = 1e-1;
 update_params.num_mass_pcs = 200;
 
 % Set solution

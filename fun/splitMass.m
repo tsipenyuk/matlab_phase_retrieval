@@ -48,7 +48,7 @@ function fout = myCdf(xin, fin) % Trapezregel
     for i = 1 : 1 : length(fin) - 1
         fout(i+1) = fout(i) + (fin(i+1) + fin(i)) / 2 * (xin(i+1) - xin(i));
     end
-    fout = fout - fout(1);
+    fout = fout - fout(1); % Very first value is 0 (no information)
 end % myCdf
 %==========================================================================
 

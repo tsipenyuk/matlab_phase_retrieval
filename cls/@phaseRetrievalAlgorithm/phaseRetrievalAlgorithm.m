@@ -68,7 +68,7 @@ classdef phaseRetrievalAlgorithm
                 disp(['Info: the exact solution of the problem was' ...
                       ' not specified. Proceeding with FT modulus...']);
             end
-            
+
             obj.current = obj.initial;
             obj.energy = [];
             obj.num_steps = 0;
@@ -88,8 +88,10 @@ classdef phaseRetrievalAlgorithm
         
         
         function obj = update(obj, num_updates)
+
             if isstr(obj.update_params) % aka update_params == 'None'
                 for i = 1 : 1 : num_updates
+                    disp(i)
                     [new_density, new_energy] = ...
                         obj.update_function(obj.current.density, obj.ftmod);
                     obj.current = obj.current.set_density(new_density);
@@ -97,6 +99,7 @@ classdef phaseRetrievalAlgorithm
                 end
             else
                 for i = 1 : 1 : num_updates
+                    disp(i)
                     [new_density, new_energy] = ...
                         obj.update_function(obj.current.density, ...
                                             obj.ftmod, obj.update_params);

@@ -69,7 +69,6 @@ function plot(obj, varargin)
         title(ax5,'\fontsize{12}Current FT')
         plot(ax3, obj.energy);
         title(ax3,'\fontsize{12}Energy')
-        
     else
         disp(['Currently, only 1-dimensional plotting method ' ...
               'is supported'])

@@ -28,9 +28,9 @@ function [K, uh_k, uh_kmq, uh_kpq, quot_k, phase_k] = wfk_1d(k, q, k_grid, u_hat
     [Q_int, ~] = ndgrid(quot, dummy);
 
     % Interpolation
-    u_hat_func = griddedInterpolant(KG, dG, U_int, 'linear', 'linear');
-    sqrtI_func = griddedInterpolant(KG, dG, I_int, 'linear', 'linear'); 
-    quot_func  = griddedInterpolant(KG, dG, Q_int, 'linear', 'linear');
+    u_hat_func = griddedInterpolant(KG, dG, U_int, 'linear', 'none');
+    sqrtI_func = griddedInterpolant(KG, dG, I_int, 'linear', 'none'); 
+    quot_func  = griddedInterpolant(KG, dG, Q_int, 'linear', 'none');
 
     % Dependence on the 2nd argument is the dummy dependence here
     % Transpose to ensure optimal interpolant evaluation efficiency 
@@ -40,9 +40,16 @@ function [K, uh_k, uh_kmq, uh_kpq, quot_k, phase_k] = wfk_1d(k, q, k_grid, u_hat
     % interpolation.
     uh_kmq = u_hat_func(k' - q', q');
     uh_kpq = u_hat_func(k' + q', q');
+    % Set values beyond the interpolation grid to 0
+    uh_k(isnan(uh_k)) = 0;
+    uh_kmq(isnan(uh_kmq)) = 0;
+    uh_kpq(isnan(uh_kpq)) = 0;
+
 
     
     quot_k = quot_func(k', q');
+    quot_k(isnan(quot_k)) = 0;
+    
     phase_k = exp(1j * angle(uh_k));
 
     K_part = 1j .* q' .* (uh_kmq .* (1 - quot_k) + ...

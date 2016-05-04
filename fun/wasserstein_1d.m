@@ -39,8 +39,8 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     [x_pcs, F_pcs] = splitMass(update_params.num_mass_pcs, ...
                                update_params.x_list, g);
     
-    M = sum(g);
-    disp(['Total mass: ' num2str(M)]);
+    M = sum(g); % Is M == F_pcs(end)? It should be! Check!
+    %disp(['Total mass: ' num2str(M)]);
 
     % Center-of-mass coordinates of mass pieces
     x_com = comCoordinates(update_params.x_list(1), x_pcs);
@@ -74,22 +74,53 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     % Calculate the velocity at the center-of-mass points
     w_com = w_func(x_com);
     x_com_new = x_com + update_params.h * w_com;
-    x_rpt_new = rptCoordinates(update_params.x_list(1), x_com_new);
+    % Wrap the values around (everything that is too far on the
+    % right, comes back on the left side)
+    x_com_new_bd = makeModular(update_params.x_list(1), ...
+                               update_params.x_list(end), ...
+                               x_com_new)
+    % Sort new coordinates in ascending order
+    x_com_new_s = sort(x_com_new_bd);
+    x_rpt_new = rptCoordinates(update_params.x_list(1), x_com_new_s);
+
+    % Our function will be interpolated between x_list(1) and
+    % x_list(end) --- pad current coordinates, if needed
+    %%%ADJUST
+    if x_rpt_new(1) > update_params.x_list(1)
+        x_rpt_new = [update_params.x_list(1) x_rpt_new]
+        F_rpt = [0 F_pcs]
+    end
+    if x_rpt_new(end) < update_params.x_list(end)
+        x_rpt_new = [x_rpt_new update_params.x_list(end)]
+        F_rpt = [F_pcs M]
+    end
+    
+    F_func_new = griddedInterpolant(x_rpt_new, ...
+                                    F_com, ...
+                                    'linear', 'none');
+    figure
+    plot(x_com_new)
+    plot(x_com_new_s)
+    plot(x_rpt_new)
     
     % Calculate the new density
-    x_tmp = [update_params.x_list(1) x_rpt_new];
     m = F_pcs(1);
     g_rpt_new = zeros(size(x_rpt_new));
-    for i = 1:1:length(g_rpt_new)
-        g_rpt_new(i) = m / (x_tmp(i + 1) - x_tmp(i));
+    g_rpt_new(1) = 2 * m / (x_rpt_new(2) - update_params.x_list(1));
+    g_rpt_new(end) = m / (update_params.x_list(end) - x_rpt_new(end-1));
+    for i = 2:1:(length(g_rpt_new) - 1)
+        g_rpt_new(i) = 2 * m / (x_rpt_new(i + 1) - ...
+                                x_rpt_new(i - 1));
     end
+    if any(g_rpt_new < 0)
+        disp('Density less than 0!');
+    end
+
     
     % Leftmostpoint is a dummy to ensure non-NaN values for the
     % leftmost part of the interpolation
-    [sort_x_rpt_new, sort_index] = sort(x_rpt_new);
-    sort_g_rpt_new = g_rpt_new(sort_index);
-    g_func_new = griddedInterpolant(sort_x_rpt_new, ...
-                                    sort_g_rpt_new, ...
+    g_func_new = griddedInterpolant(x_rpt_new, ...
+                                    g_rpt_new, ...
                                     'linear', 'none');
     g_new = g_func_new(update_params.x_list);
 
@@ -109,7 +140,6 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     error = eM(g_new, sqrtI);
     
     % Debugging info 
-        figure;
         hold on;
         subplot(2,1,1)
         plot(x_com, F_pcs, 'xb'); 
@@ -119,8 +149,8 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
         plot(x_rpt_new, g_rpt_new, '-b');
         plot(update_params.x_list, g_new, '.g');
         subplot(2,1,2);
-        plot(real(w_hat));
-        plot(imag(w_hat));
+        plot(real(w_hat_s));
+        plot(imag(w_hat_s));
         hold off;
         % Debugging info -- end
 end
