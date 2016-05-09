@@ -1,21 +1,36 @@
 function [x_pcs, F_pcs] = splitMass(num_mass_pieces, x_list, f_list)
 % SPLITMASS Split density function into points with the same partial mass
 %
-% Given discretized function f_list defined on points of x_list.
-% Let M be the total mass of f_list. Cut M into num_mass_pieces
-% and return the coordinates of the rightmost edge of each mass
-% piece. I.e., return
-%                           F^{-1}(y)
-% where F is the cumulative distribution of f_list, F^{-1} is its
-% inverse, and y are equidistant points between 0 and M.
+%   [x_pcs, F_pcs] = splitMass(num_mass_pieces, x_list, f_list). Given
+%   discretized function f_list defined on points of x_list.  Let M be
+%   the total mass of f_list. Cut M into num_mass_pieces and return
+%   the coordinates of the rightmost edge of each mass piece. I.e.,
+%   return F^{-1}(y) where F is the cumulative distribution of f_list,
+%   F^{-1} is its inverse, and y are equidistant points between 0 and
+%   M.
+%
+%   numm_mass_pieces = integer, number of pieces into which the
+%   density will be split.
+%
+%   x_list = coordinates at which the density function is
+%   discretized
+%
+%   f_list = values of the density function
+%
+%   x_pcs = right-hand side coordinates of the mass pieces into
+%   which the density is split
+%
+%   F_pcs = cumulative distribution function of the given density
+%   evaluated at points x_pcs. It is merely an equidistant list
+%   from M/num_mass_pieces to M.
+%
+%   Arseniy Tsipenyuk, TUM M7
+%   May 9th, 2016
+
     
-    F_list = myCdf(x_list, f_list);
+    F_list = indefiniteIntegral(x_list, f_list);
     M = F_list(end);
  
-    
-    % Make an interpolation of the cdf
-    %F = griddedInterpolant(F_list); 
-
     % CDF corresponding to the points on the x axis that we want to find
     F_pcs = linspace(M / num_mass_pieces, M, num_mass_pieces);
     
@@ -41,17 +56,6 @@ function [x_pcs, F_pcs] = splitMass(num_mass_pieces, x_list, f_list)
     end
 end
             
-            
-%==== Function used to calculate the cumulative distribution function ====
-function fout = myCdf(xin, fin) % Trapezregel
-    fout = fin;
-    for i = 1 : 1 : length(fin) - 1
-        fout(i+1) = fout(i) + (fin(i+1) + fin(i)) / 2 * (xin(i+1) - xin(i));
-    end
-    fout = fout - fout(1); % Very first value is 0 (no information)
-end % myCdf
-%==========================================================================
-
 
 %==== Function used to solve linear equation with two known points ======
 function x = solveLinear(x1, x2, f1, f2, f)

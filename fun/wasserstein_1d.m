@@ -38,9 +38,7 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     % Right ends of mass pieces
     [x_pcs, F_pcs] = splitMass(update_params.num_mass_pcs, ...
                                update_params.x_list, g);
-    
-    M = sum(g); % Is M == F_pcs(end)? It should be! Check!
-    %disp(['Total mass: ' num2str(M)]);
+    M = F_pcs(end);
 
     % Center-of-mass coordinates of mass pieces
     x_com = comCoordinates(update_params.x_list(1), x_pcs);
@@ -49,11 +47,14 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     % Use Fie library to solve the corresponding Fredholm equation
     g_hat = fft(g);
     function res = K(k_, q_)
-        res = wfk_1d(k_, q_, update_params.k_list, ...
-                     g_hat, sqrtI, update_params.h);
+        [res,~,~,~,~,~,~] = wfpr_1d(k_, q_, update_params.k_list, ...
+                                    fftshift(g_hat), fftshift(sqrtI), ...
+                                    update_params.h);
     end
     function res = RHS(k_)
-        res = wfrhs_1d(k_, update_params.k_list, g_hat, sqrtI);
+        [~,res,~,~,~,~,~] = wfpr_1d(k_, q_, update_params.k_list, ...
+                                    fftshift(g_hat), fftshift(sqrtI), ...
+                                    update_params.h);
     end
 
     % Call the Fie library
@@ -154,14 +155,3 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
         hold off;
         % Debugging info -- end
 end
-
-
-%==== Function used to calculate the cumulative distribution function ====
-function fout = myCdf(xin, fin)
-    fout = fin;
-    for i = 1 : 1 : length(fin) - 1
-        fout(i+1) = fout(i) + fout(i+1) * (xin(i+1) - xin(i));
-    end
-    fout = fout - fout(1);
-end % myCdf
-%==========================================================================
