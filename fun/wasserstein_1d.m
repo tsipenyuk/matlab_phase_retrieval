@@ -1,39 +1,40 @@
 function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params)
 % ER Wasserstein gradient flow algorithm (WGF-alg)
 % 
-% Perform one step of the WGF-alg, using an array g as
-% the input density and an array A (of the same size as g) as the
-% square root of the measured intensity.
-% Calculate the modulus energy 
-% $$
-%          error = \int (|\hat g(k)| - sqrtI(k))^2 dk.
-% $$
+%   Perform one step of the WGF-alg, using an array g as
+%   the input density and an array A (of the same size as g) as the
+%   square root of the measured intensity.
+%   Calculate the modulus energy 
+%   $$
+%            E[g] = \int (|\hat g(k)| - sqrtI(k))^2 dk.
+%   $$
+%   
+%   INPUT
+%   
+%   g     = one-dimensional array describing the density
 %
-% INPUT
-%
-% g      one-dimensional array describing the density
-% sqrtI  one-dimensional array describing the desired Fourier
-%        modulus
-%
-% update_params    structure array containing following tuning
-%                  details of the algorithm
-%
-% update_params.x_list       - spacial coordinates of the density g
-% update_params.k_list       - Fourier coordinates of \hat g
-% update_params.num_mass_pcs - number of mass pieces into which the
-%                              density is split. These pieces are
-%                              then moved according to the
-%                              Wasserstein gradient. 
-% update_params.step_size    - step size of the gradient descent.
-%
-% ALGORITHM
-% The algorithm performs the following steps.
-% 1. Split the mass of the density g into
-% update_params.num_mass_pcs points. Store the coordinates of these
-% points in the vector x.
-% 2. Calculate the Wasserstein gradient at x.
-% 3. Move points x by  (values stored in the gradient * step_size).
-% 4. Use linear interpolation to calculate the new density g_new.
+%   sqrtI = one-dimensional array describing the desired Fourier
+%   modulus
+%   
+%   update_params =  structure array containing following tuning
+%                    details of the algorithm
+%   
+%   update_params.x_list       = spacial coordinates of the density g
+%   update_params.k_list       = Fourier coordinates of \hat g
+%   update_params.num_mass_pcs = number of mass pieces into which the
+%                                density is split. These pieces are
+%                                then moved according to the
+%                                Wasserstein gradient. 
+%   update_params.step_size    = step size of the gradient descent.
+%   
+%   ALGORITHM
+%   The algorithm performs the following steps.
+%   1. Split the mass of the density g into
+%   update_params.num_mass_pcs points. Store the coordinates of these
+%   points in the vector x.
+%   2. Calculate the Wasserstein gradient at x.
+%   3. Move points x by  (values stored in the gradient * step_size).
+%   4. Use linear interpolation to calculate the new density g_new.
     
     % Right ends of mass pieces
     [x_pcs, F_pcs] = splitMass(update_params.num_mass_pcs, ...
@@ -45,6 +46,8 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     
     % Calculate the Wasserstein gradient at x_com
     % Use Fie library to solve the corresponding Fredholm equation
+
+    % Define the FIE-compatible kernel and RHS functions
     g_hat = fft(g);
     function res = K(k_, q_)
         [res,~,~,~,~,~,~] = wfpr_1d(k_, q_, update_params.k_list, ...
@@ -52,7 +55,7 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
                                     update_params.h);
     end
     function res = RHS(k_)
-        [~,res,~,~,~,~,~] = wfpr_1d(k_, q_, update_params.k_list, ...
+        [~,res,~,~,~,~,~] = wfpr_1d(k_, k_, update_params.k_list, ...
                                     fftshift(g_hat), fftshift(sqrtI), ...
                                     update_params.h);
     end
@@ -86,7 +89,6 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
 
     % Our function will be interpolated between x_list(1) and
     % x_list(end) --- pad current coordinates, if needed
-    %%%ADJUST
     if x_rpt_new(1) > update_params.x_list(1)
         x_rpt_new = [update_params.x_list(1) x_rpt_new]
         F_rpt = [0 F_pcs]
