@@ -42,7 +42,7 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     M = F_pcs(end);
 
     % Center-of-mass coordinates of mass pieces
-    x_com = comCoordinates(update_params.x_list(1), x_pcs);
+    %x_com = comCoordinates(update_params.x_list(1), x_pcs);
     
     % Calculate the Wasserstein gradient at x_com
     % Use Fie library to solve the corresponding Fredholm equation
@@ -55,9 +55,8 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
                                     update_params.h);
     end
     function res = RHS(k_)
-        [~,res,~,~,~,~,~] = wfpr_1d(k_, k_, update_params.k_list, ...
-                                    fftshift(g_hat), fftshift(sqrtI), ...
-                                    update_params.h);
+        res = wfrhs_1d(k_, update_params.k_list, ...
+                        fftshift(g_hat), fftshift(sqrtI));
     end
 
     % Call the Fie library
@@ -76,30 +75,40 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     w_func = griddedInterpolant(update_params.x_list, w_list, 'linear', ...
                                 'none');
     % Calculate the velocity at the center-of-mass points
-    w_com = w_func(x_com);
+    w_com = w_func(x_rpt);
     x_com_new = x_com + update_params.h * w_com;
     % Wrap the values around (everything that is too far on the
     % right, comes back on the left side)
     x_com_new_bd = makeModular(update_params.x_list(1), ...
                                update_params.x_list(end), ...
-                               x_com_new)
+                               x_com_new);
     % Sort new coordinates in ascending order
     x_com_new_s = sort(x_com_new_bd);
-    x_rpt_new = rptCoordinates(update_params.x_list(1), x_com_new_s);
+    x_rpt_new = rptCoordinates(update_params.x_list(1), ...
+                               x_com_new_s);
+    if any(x_rpt_new ~= sort(x_rpt_new))
+        disp('Awww...')
+        
+        figure
+        hold on
+        plot(x_rpt_new, 'x')
+        plot(sort(x_rpt_new), 'o')
+        hold off
+    end
 
     % Our function will be interpolated between x_list(1) and
     % x_list(end) --- pad current coordinates, if needed
     if x_rpt_new(1) > update_params.x_list(1)
-        x_rpt_new = [update_params.x_list(1) x_rpt_new]
-        F_rpt = [0 F_pcs]
+        x_rpt_new = [update_params.x_list(1) x_rpt_new];
+        F_rpt = [0 F_pcs];
     end
     if x_rpt_new(end) < update_params.x_list(end)
-        x_rpt_new = [x_rpt_new update_params.x_list(end)]
-        F_rpt = [F_pcs M]
+        x_rpt_new = [x_rpt_new update_params.x_list(end)];
+        F_rpt = [F_pcs M];
     end
     
     F_func_new = griddedInterpolant(x_rpt_new, ...
-                                    F_com, ...
+                                    F_rpt, ...
                                     'linear', 'none');
     figure
     plot(x_com_new)

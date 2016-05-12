@@ -14,11 +14,9 @@ function fout = indefiniteIntegral(xin, fin)
 %
 %   Arseniy Tsipenyuk, TUM M7
 %   May 09, 2016
-    fout = fin;
+    fout = zeros(size(fin));
     for i = 1 : 1 : length(fin) - 1
         fout(i+1) = fout(i) +  (xin(i+1) - xin(i)) * (fin(i+1) + fin(i)) / 2;
     end
-
-    fout = fout - fout(1); % Very first value is 0 (no information)
 end
 
