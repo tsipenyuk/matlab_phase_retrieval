@@ -74,27 +74,17 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     
     w_func = griddedInterpolant(update_params.x_list, w_list, 'linear', ...
                                 'none');
-    % Calculate the velocity at the center-of-mass points
-    w_com = w_func(x_rpt);
-    x_com_new = x_com + update_params.h * w_com;
+
+    w_pcs = w_func(x_pcs); % Velocity at points x_pcs
+    x_pcs_new = x_pcs + update_params.h * w_pcs;
+    
     % Wrap the values around (everything that is too far on the
     % right, comes back on the left side)
-    x_com_new_bd = makeModular(update_params.x_list(1), ...
+    x_pcs_new_bd = makeModular(update_params.x_list(1), ...
                                update_params.x_list(end), ...
-                               x_com_new);
+                               x_pcs_new);
     % Sort new coordinates in ascending order
-    x_com_new_s = sort(x_com_new_bd);
-    x_rpt_new = rptCoordinates(update_params.x_list(1), ...
-                               x_com_new_s);
-    if any(x_rpt_new ~= sort(x_rpt_new))
-        disp('Awww...')
-        
-        figure
-        hold on
-        plot(x_rpt_new, 'x')
-        plot(sort(x_rpt_new), 'o')
-        hold off
-    end
+    x_pcs_new_s = sort(x_pcs_new_bd);
 
     % Our function will be interpolated between x_list(1) and
     % x_list(end) --- pad current coordinates, if needed
@@ -107,14 +97,11 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
         F_rpt = [F_pcs M];
     end
     
+    % Interpolate the cumulative distribution fct
     F_func_new = griddedInterpolant(x_rpt_new, ...
                                     F_rpt, ...
                                     'linear', 'none');
-    figure
-    plot(x_com_new)
-    plot(x_com_new_s)
-    plot(x_rpt_new)
-    
+
     % Calculate the new density
     m = F_pcs(1);
     g_rpt_new = zeros(size(x_rpt_new));
@@ -154,8 +141,8 @@ function [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params
     % Debugging info 
         hold on;
         subplot(2,1,1)
-        plot(x_com, F_pcs, 'xb'); 
-        plot(x_com_new, F_pcs, 'og');
+        plot(x_pcs, F_pcs, 'xb'); 
+        plot(x_pcs_new, F_pcs, 'og');
         plot(x_rpt_new, F_pcs, '-r');
         yyaxis right
         plot(x_rpt_new, g_rpt_new, '-b');

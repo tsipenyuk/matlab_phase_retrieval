@@ -88,7 +88,6 @@ classdef phaseRetrievalAlgorithm
         
         
         function obj = update(obj, num_updates)
-
             if isstr(obj.update_params) % aka update_params == 'None'
                 for i = 1 : 1 : num_updates
                     disp(i)

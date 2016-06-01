@@ -1,6 +1,6 @@
-function x_rpt = rptCoordinates(left_bd, right_bd, x_com)
+function f_list = rptCoordinates(x_list, x_com)
 % RPTCOORDINATES Given center-of-mass coordinates of mass pieces, calculate
-% their center-of-mass coordinates assuming linear weight
+% their right-point coordinates assuming constant weight
 % distribution within one piece.
 %
 %   x_rpt = RPTCOORDINATES(x_pcs, f_pcs) Given...

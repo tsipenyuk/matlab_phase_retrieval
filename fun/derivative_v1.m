@@ -1,4 +1,4 @@
-function fout = derivative_v1(xin, Fin)
+function fout = derivative_v1(deltax, Fin)
 % NONREGULARDERIVATIVE one-dimensional periodic derivative
 %
 %   fout = nonregularDerivative(xin, Fin) is constructed as the inverse
@@ -7,7 +7,7 @@ function fout = derivative_v1(xin, Fin)
 %   values Fin. The derivative is calculated using the formula
 %   \begin{equation}
 %   \label{eq1}
-%   f_i + f_{i+1} = 2 (F_{i+1} - F_{i}) / (X_{i+1} - X_{i}).
+%   f_i + f_{i+1} = 2 (F_{i+1} - F_{i}) / \Delta x.
 %   \end{equation}
 %   This relation does not set the first value of the derivative
 %   $f_1$. To fix this value, we use the additional assumption that
@@ -34,8 +34,7 @@ function fout = derivative_v1(xin, Fin)
 %   with the conventional two-point stencil derivative at xin(2).
 %
 %
-%   xin = vector containing points at which the function is
-%   discretized
+%   deltax = distance between points on the x axis
 %
 %   Fin = vector containing function values at xin
 %
@@ -43,8 +42,8 @@ function fout = derivative_v1(xin, Fin)
 %
 %   Arseniy Tsipenyuk, TUM M7
 %   May 09, 2016
-    if rem(length(Fin),2) == 1
-        error('Length of each input vector must be even, not odd.')
+    if rem(length(Fin),2) == 0
+        error('Length of each input vector must be odd, not even.')
     end
     
     if size(Fin,1) ~= 1
@@ -53,17 +52,17 @@ function fout = derivative_v1(xin, Fin)
     end
 
     
-    F1 = Fin(1:end-1);
-    F2 = Fin(2:end);
-    F1s = Fin(1:end-2);
-    F3s = Fin(3:end);
-    x1 = xin(1:end-1);
-    x1s = xin(1:end-2);
-    x3s = xin(3:end);
-    x2 = xin(2:end);
+    F1 = Fin;
+    F2 = circshift(Fin, [0, 1]);
+    %F1s = Fin(1:end-2);
+    %F3s = Fin(3:end);
+    x1 = xin;
+    %x1s = xin(1:end-2);
+    %x3s = xin(3:end);
+    x2 = circshift(xin, [0, 1 ]);
     %x3 = circshift(xin, [0, 2]);
     
-    RHS = 2 * (F2 - F1) ./ (x2 - x1);
+    RHS = 2 * (F2 - F1) ./ delta;
     if size(RHS, 2) ~= 1
         RHS = RHS';
     end

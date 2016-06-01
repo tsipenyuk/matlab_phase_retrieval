@@ -1,6 +1,20 @@
+% latex source code
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.tex
+*.bib
+
+
 *.pyc
+
+% emacs and vim backup files
 *~
 *#
 \#*#
 .#*
+
+% custom temp files
 tmp*
