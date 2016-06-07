@@ -1,28 +1,22 @@
-function [g_new, error] = bio(g, A, beta)
-% bio - Basic Input-Output algorithm
+function [g_new, error] = dmap(g, A, beta)
+% dmap - Difference map algorithm (optimized variant)
 %
 % Synopsis ([]s are optional)
-%   [g_new, error] = bio(g, A, [beta], [pObj], [varargin])
+%   [g_new, error] = hio(g, A, [beta])
 %
 % Description
 %   Performs a phase retrieval update step and calculates the error
-%   (energy) corresponding to the update.
+%   (energy) corresponding to optimized difference map algorithm 
+%   (optimized version) as described in [Elser], p. 45.
 %
 % Inputs ([]s are optional)
 %   (ndarray) g      Current  approximation to the solution of the
 %                    phase retrieval problem
 %   (ndarray) A      Phase retrieval data (square root of the
 %                    measured intensity)
-%   (scalar)  [beta = 1.25]
-%                    Update parameter, default value from [Fienup]
-%   (func)    [pObj = @pP]
-%                    handle to the projection onto the object space
-%                    (non-negativity, atomicity, etc.). pObj must
-%                    take g as the first argument, may contain
-%                    optional arguments specified in varargin.
-%   (...)     [varargin]
-%                    optional arguments passed to pObj --- if
-%                    submitted, pObj is  called as pObj(g, varargin)
+%   (scalar)  [beta = -1]
+%                    Update parameter, one of the values used in
+%                    in [Elser]. Setting beta=1 yields bauschke_hio.
 %
 % Outputs ([]s are optional)
 %   (ndarray) g_new  Updated approximation to the solution of the 
@@ -40,10 +34,7 @@ function [g_new, error] = bio(g, A, beta)
 %   g_new = A;
 %   E = [];
 %   for i=1:1:200
-%       % Stabilizing ER step, cf. [Fienup], p. 2765
-%       [g_new, error] = er(g_new, A); 
-%       E = [E error];
-%       [g_new, error] = bio(g_new, A);
+%       [g_new, error] = dmap(g_new, A);
 %       E = [E error];
 %   end
 %   plot(E);
@@ -58,16 +49,23 @@ function [g_new, error] = bio(g, A, beta)
 %   g_new = A;
 %   E = [];
 %   for i=1:1:200
-%       % Stabilizing ER step, cf. [Fienup], p. 2765
-%       [g_new, error] = er(g_new, A); 
-%       E = [E error];
-%       [g_new, error] = bio(g_new, A);
+%       [g_new, error] = dmap(g_new, A);
 %       E = [E error];
 %   end
 %
+% See also
+%   er
+%   bio
+%   hio_bauschke
+%   hio_fienup
+%   
+% Requirements
+%   pM (modulus projection)
+%   pP (non-negative projection)
+%
 % References
-%   J. R. Fienup, “Phase retrieval algorithms: a comparison,” 
-%       Applied Optics, vol. 21, pp. 2758–2769, 1982.
+%   V. Elser, “Phase retrieval by iterated projections,”
+%       J. Opt. Soc. Am. A., vol. 20, pp. 40–55, 2003.
 %   doc/phase_retrieval_algorithms.pdf
 %
 % Authors
@@ -78,22 +76,16 @@ function [g_new, error] = bio(g, A, beta)
 %
 % Changes
 %   2016-06-01  First Edition
-%   2016-06-07  Added pObj support
     if nargin == 2
-        beta = 1.25;
-        pObj = @pP;
+        beta = -1; % you may try other values, [Elser] 
+                   % uses 1 (HIO with hio.beta=1), 0.5 
+                   % and 0.3 among others.
     end
-    
-    if nargin == 3
-        pObj = @pP;
-    end
-    
-    % Calculate the update
+
     pM_g = pM(g, A);
-    if nargin <= 4
-        g_new = g - beta * pM_g + beta * pObj(pM_g);
-    else
-        g_new = g - beta * pM_g + beta * pObj(pM_g, varargin);
-    end
+    pP_g = pP(g);
+    % Double check! Suspicious! Verify beta=1 yielding HIO!
+    g_new = g - pP_g - pM_g - (1 + beta) * pP(pM_g) + ...
+                              (1 - beta) * pM(pP_g, A);
     error = eM(g_new, A);
 end

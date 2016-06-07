@@ -1,12 +1,14 @@
-function [g_new, error] = bio(g, A, beta)
-% bio - Basic Input-Output algorithm
+function [g_new, error] = hio_fienup(g, A, beta)
+% hio - Hybrid Input-Output algorithm (Fienup' variant)
 %
 % Synopsis ([]s are optional)
-%   [g_new, error] = bio(g, A, [beta], [pObj], [varargin])
+%   [g_new, error] = hio(g, A, [beta])
 %
 % Description
 %   Performs a phase retrieval update step and calculates the error
-%   (energy) corresponding to the update.
+%   (energy) corresponding to the hybrid input-output update, as 
+%   described in [Fienup] (cf [Bauschke, Remark 4.1]) using
+%   the positivity constraint in the object space.
 %
 % Inputs ([]s are optional)
 %   (ndarray) g      Current  approximation to the solution of the
@@ -15,14 +17,6 @@ function [g_new, error] = bio(g, A, beta)
 %                    measured intensity)
 %   (scalar)  [beta = 1.25]
 %                    Update parameter, default value from [Fienup]
-%   (func)    [pObj = @pP]
-%                    handle to the projection onto the object space
-%                    (non-negativity, atomicity, etc.). pObj must
-%                    take g as the first argument, may contain
-%                    optional arguments specified in varargin.
-%   (...)     [varargin]
-%                    optional arguments passed to pObj --- if
-%                    submitted, pObj is  called as pObj(g, varargin)
 %
 % Outputs ([]s are optional)
 %   (ndarray) g_new  Updated approximation to the solution of the 
@@ -41,9 +35,10 @@ function [g_new, error] = bio(g, A, beta)
 %   E = [];
 %   for i=1:1:200
 %       % Stabilizing ER step, cf. [Fienup], p. 2765
+%       % (May be omitted)
 %       [g_new, error] = er(g_new, A); 
 %       E = [E error];
-%       [g_new, error] = bio(g_new, A);
+%       [g_new, error] = hio_fienup(g_new, A);
 %       E = [E error];
 %   end
 %   plot(E);
@@ -60,14 +55,28 @@ function [g_new, error] = bio(g, A, beta)
 %   for i=1:1:200
 %       % Stabilizing ER step, cf. [Fienup], p. 2765
 %       [g_new, error] = er(g_new, A); 
+%       % (May be omitted)
 %       E = [E error];
-%       [g_new, error] = bio(g_new, A);
+%       [g_new, error] = hio_fienup(g_new, A);
 %       E = [E error];
 %   end
+%
+% See also
+%   er
+%   bio
+%   hio_bauschke
+%   dmap
+%   
+% Requirements
+%   pM
 %
 % References
 %   J. R. Fienup, “Phase retrieval algorithms: a comparison,” 
 %       Applied Optics, vol. 21, pp. 2758–2769, 1982.
+%   H. H. Bauschke, P. L. Combettes, and R. D. Luke, “Phase 
+%       retrieval, error reduction algorithm, and Fienup 
+%       variants: a view from convex optimization,”
+%       J. Opt. Soc. Am. A., vol. 19, pp. 1334–1345, 2002.
 %   doc/phase_retrieval_algorithms.pdf
 %
 % Authors
@@ -78,22 +87,16 @@ function [g_new, error] = bio(g, A, beta)
 %
 % Changes
 %   2016-06-01  First Edition
-%   2016-06-07  Added pObj support
     if nargin == 2
-        beta = 1.25;
-        pObj = @pP;
+        beta = 1.25; % Cf. [Fienup], Fig. 6.
     end
-    
-    if nargin == 3
-        pObj = @pP;
-    end
-    
-    % Calculate the update
+
     pM_g = pM(g, A);
-    if nargin <= 4
-        g_new = g - beta * pM_g + beta * pObj(pM_g);
-    else
-        g_new = g - beta * pM_g + beta * pObj(pM_g, varargin);
-    end
+    
+    % Set the values for g >= 0
+    g_new = pM_g;
+    
+    % Overwrite the values for g < 0
+    g_new(pM_g < 0) = g(pM_g < 0) - beta * pM_g(pM_g < 0);
     error = eM(g_new, A);
 end

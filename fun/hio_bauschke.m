@@ -1,12 +1,14 @@
-function [g_new, error] = bio(g, A, beta)
-% bio - Basic Input-Output algorithm
+function [g_new, error] = hio_bauschke(g, A, beta)
+% hio - Hybrid Input-Output algorithm (Bauschke' variant)
 %
 % Synopsis ([]s are optional)
-%   [g_new, error] = bio(g, A, [beta], [pObj], [varargin])
+%   [g_new, error] = hio(g, A, [beta])
 %
 % Description
 %   Performs a phase retrieval update step and calculates the error
-%   (energy) corresponding to the update.
+%   (energy) corresponding to the hybrid input-output update, as 
+%   described in [Bauschke] (cf [Bauschke, Remark 4.1]), but using
+%   the positivity constraint instead of the support constraint.
 %
 % Inputs ([]s are optional)
 %   (ndarray) g      Current  approximation to the solution of the
@@ -41,9 +43,10 @@ function [g_new, error] = bio(g, A, beta)
 %   E = [];
 %   for i=1:1:200
 %       % Stabilizing ER step, cf. [Fienup], p. 2765
+%       % (May be omitted)
 %       [g_new, error] = er(g_new, A); 
 %       E = [E error];
-%       [g_new, error] = bio(g_new, A);
+%       [g_new, error] = hio_bauschke(g_new, A);
 %       E = [E error];
 %   end
 %   plot(E);
@@ -59,22 +62,37 @@ function [g_new, error] = bio(g, A, beta)
 %   E = [];
 %   for i=1:1:200
 %       % Stabilizing ER step, cf. [Fienup], p. 2765
+%       % (May be omitted)
 %       [g_new, error] = er(g_new, A); 
 %       E = [E error];
-%       [g_new, error] = bio(g_new, A);
+%       [g_new, error] = hio_bauschke(g_new, A);
 %       E = [E error];
 %   end
+%
+% See also
+%   er
+%   bio
+%   hio_fienup
+%   dmap
+%   
+% Requirements
+%   pM (modulus projection)
+%   pP (non-negative projection)
 %
 % References
 %   J. R. Fienup, “Phase retrieval algorithms: a comparison,” 
 %       Applied Optics, vol. 21, pp. 2758–2769, 1982.
+%   H. H. Bauschke, P. L. Combettes, and R. D. Luke, “Phase 
+%       retrieval, error reduction algorithm, and Fienup 
+%       variants: a view from convex optimization,”
+%       J. Opt. Soc. Am. A., vol. 19, pp. 1334–1345, 2002.
 %   doc/phase_retrieval_algorithms.pdf
 %
 % Authors
 %   Arseniy Tsipenyuk <tsipenyu(at)ma.tum.de>
 %
 % License
-%   See Phase Retrieval Sandbox root folder.
+%   See Phase nRetrieval Sandbox root folder.
 %
 % Changes
 %   2016-06-01  First Edition
@@ -91,9 +109,11 @@ function [g_new, error] = bio(g, A, beta)
     % Calculate the update
     pM_g = pM(g, A);
     if nargin <= 4
-        g_new = g - beta * pM_g + beta * pObj(pM_g);
+        g_new = g - pObj(g) - beta * pM_g + (1 + beta) * pObj(pM_g);
     else
-        g_new = g - beta * pM_g + beta * pObj(pM_g, varargin);
+        g_new = g - pObj(g, varargin) - beta * pM_g ...
+                + (1 + beta) * pObj(pM_g, varargin);
     end
+
     error = eM(g_new, A);
 end
