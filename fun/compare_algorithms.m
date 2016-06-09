@@ -1,4 +1,4 @@
-function argout = compare_algorithms(g, sqrtI, nSteps, varargin)
+function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
 % compare_algorithms - run multiple phase-ret. algoritms at once
 %
 % Synopsis ([]s are optional)
@@ -26,11 +26,8 @@ function argout = compare_algorithms(g, sqrtI, nSteps, varargin)
 %                      as a parameter.
 %
 % Outputs
-%   (cell array) argout  Cell array with two entries: 
-%                         - first entry contains a cell array with
-%                         approximated solutions of each algorithm;
-%                         - second entry contains a cell array with
-%                         energy descent information of each
+%   (cell array) gOut  Cell array approximated solutions of each algorithm;
+%   (cell array) eOut  Cell array with energy descent information of each
 %                         algorithm.
 %
 % Examples
@@ -43,17 +40,17 @@ function argout = compare_algorithms(g, sqrtI, nSteps, varargin)
 %   g_init = g;
 %
 %   % default comparisson
-%   res = compare_algorithms(g_init, A, 200);
+%   [gOut eOut] = compare_algorithms(g_init, A, 200);
 %
 %   % compare using two (or more) specific update algorithms:
-%   res = compare_algorithms(g_init, A, 200, @er, @hio_bauschke);
+%   [gOut eOut] = compare_algorithms(g_init, A, 200, @er, @hio_bauschke);
 %
 %   % Tell hio to use beta=0.6 and explicitely state pP as the
 %   % projection in the object space:
-%   res = compare_algorithms(g_init, A, 200, {@er, 'None'}, ...
+%   [gOut eOut] = compare_algorithms(g_init, A, 200, {@er, 'None'}, ...
 %                                            {@hio_bauschke, 0.6, @pP});
-%   plot(res{1}{1}) % Plot the approximation of er
-%   plot(res{1}{2}) % Plot the energy descent of er
+%   plot(gOut{1}) % Plot the approximation of er
+%   plot(eOut{1}) % Plot the energy descent of er
 %
 % Requirements
 %   If called with default parameters, the following functions are
@@ -119,6 +116,7 @@ function argout = compare_algorithms(g, sqrtI, nSteps, varargin)
     argout = {gOut eOut};
     % Plot resulting energies 
     figure;
+    ax = axes;
     m = ceil(sqrt(length(algorithms)));
     for iAlg = 1:1:length(algorithms)
         hold on;
@@ -126,8 +124,10 @@ function argout = compare_algorithms(g, sqrtI, nSteps, varargin)
         plot(E);
         % Assuming the first algorithm is stabler, use it to fix
         % axes
-        axis([0 nSteps 0 1.1 * max(eOut{1}(:))])
+        %axis([0 nSteps 0 1.1 * max(eOut{1}(:))])
     end
+    set(ax ,'xscale','log');
+    set(ax ,'yscale','log');
     % Convert algorithm names to plot legend string
     t = legend(cellstr(cellfun(@func2str, algorithms, 'un', 0)));
     % Allow underscores in function names

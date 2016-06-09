@@ -1,4 +1,4 @@
-function plot_isosurface(x1,x2,x3,g)
+function plot_isosurface(x1,x2,x3,g,n)
 % plot_isosurface - Custom plot for 3D-densities
 %
 % Synopsis
@@ -39,7 +39,9 @@ function plot_isosurface(x1,x2,x3,g)
 %   2016-06-08  First Edition
     figure; 
     hold on; 
-    n = 4;
+    if nargin < 5
+        n = 4;
+    end
     isolimits = 10.^(1:n);
     colorlist = jet(n);
     colorlist = colorlist(end:-1:1,:);
