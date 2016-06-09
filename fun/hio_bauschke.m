@@ -1,8 +1,8 @@
-function [g_new, error] = hio_bauschke(g, A, beta)
+function [g_new, error] = hio_bauschke(g, A, beta, pObj, varargin)
 % hio - Hybrid Input-Output algorithm (Bauschke' variant)
 %
 % Synopsis ([]s are optional)
-%   [g_new, error] = hio(g, A, [beta])
+%   [g_new, error] = hio(g, A, [beta], [pObj], [varargin])
 %
 % Description
 %   Performs a phase retrieval update step and calculates the error
@@ -15,8 +15,8 @@ function [g_new, error] = hio_bauschke(g, A, beta)
 %                    phase retrieval problem
 %   (ndarray) A      Phase retrieval data (square root of the
 %                    measured intensity)
-%   (scalar)  [beta = 1.25]
-%                    Update parameter, default value from [Fienup]
+%   (scalar)  [beta = 0.7]
+%                    Update parameter, default value (no explanation).
 %   (func)    [pObj = @pP]
 %                    handle to the projection onto the object space
 %                    (non-negativity, atomicity, etc.). pObj must
@@ -35,7 +35,7 @@ function [g_new, error] = hio_bauschke(g, A, beta)
 % Examples
 %   %% 1D, two gaussians
 %   x = [-20:0.2:20];
-%   g_sol = exp(-x.^2);
+%   g = exp(-x.^2);
 %   shift = fix(length(g)/4);
 %   g_sol = circshift(g, [0, shift]) + circshift(g, [0, -shift]);
 %   A = abs(fftn(g_sol));
@@ -69,6 +69,23 @@ function [g_new, error] = hio_bauschke(g, A, beta)
 %       E = [E error];
 %   end
 %
+%   %% 3D, two gaussians
+%   [x1, x2, x3] = meshgrid([-20:0.5:20], [-20:0.5:20],  [-20:0.5:20]);
+%   g = exp(-x1.^2 - x2.^2 - x3.^2);
+%   shift = fix(length(g)/4);
+%   g_sol = circshift(g, [0, shift, shift]) + ...
+%           circshift(g, [0, -shift, 0]);
+%   A = abs(fftn(g_sol));
+%   g_new = A;
+%   E = [];
+%   for i=1:1:60
+%       [g_new, error] = hio_bauschke(g_new, A);
+%       E = [E error];
+%   end
+%   plot_isosurface(x1,x2,x3,fftshift(g_sol));
+%   plot_isosurface(x1,x2,x3,g_new);
+%
+%
 % See also
 %   er
 %   bio
@@ -98,7 +115,7 @@ function [g_new, error] = hio_bauschke(g, A, beta)
 %   2016-06-01  First Edition
 %   2016-06-07  Added pObj support
     if nargin == 2
-        beta = 1.25;
+        beta = 0.7;
         pObj = @pP;
     end
     
@@ -108,12 +125,15 @@ function [g_new, error] = hio_bauschke(g, A, beta)
     
     % Calculate the update
     pM_g = pM(g, A);
-    if nargin <= 4
-        g_new = g - pObj(g) - beta * pM_g + (1 + beta) * pObj(pM_g);
-    else
-        g_new = g - pObj(g, varargin) - beta * pM_g ...
-                + (1 + beta) * pObj(pM_g, varargin);
-    end
+    one_minus_beta_pM_g = g - beta * pM_g;
 
+    if nargin <= 4
+        g_new = pObj(pM_g) + one_minus_beta_pM_g ...
+                - pObj(one_minus_beta_pM_g);
+    else
+        g_new = pObj(pM_g, varargin) + one_minus_beta_pM_g ...
+                - pObj(one_minus_beta_pM_g, varargin);
+
+    end
     error = eM(g_new, A);
 end
