@@ -95,11 +95,14 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
     % Initialize
     for iAlg = 1:1:length(algorithms)
         gOut{iAlg} = g;
-        eOut{iAlg} = [];
+        eNorm = eM(g, sqrtI);
+        eOut{iAlg} = [1];
     end
-    
+
+    h = waitbar(0, '♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙');
     % loop
     for iSteps = 1:1:nSteps
+        h = waitbar(iSteps / nSteps);
         for iAlg = 1:1:length(algorithms)
             if params{iAlg} == 'None'
                 [gOut{iAlg}, E] = ...
@@ -109,7 +112,7 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
                     algorithms{iAlg}(gOut{iAlg}, sqrtI, ...
                                      params{iAlg});
             end
-            eOut{iAlg} = [eOut{iAlg} E];
+            eOut{iAlg} = [eOut{iAlg} E / eNorm];
         end
     end
     

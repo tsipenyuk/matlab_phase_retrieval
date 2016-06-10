@@ -5,6 +5,7 @@
 *.log
 *.out
 *.tex
+*.toc
 *.bib
 
 
