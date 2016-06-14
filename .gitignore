@@ -20,3 +20,5 @@
 
 % custom temp files
 tmp*
+
+data/*

@@ -76,19 +76,15 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
         algorithms = {@er, @hio_bauschke};
         params = {'None', 'None'};
     else
-        if ~iscell(varargin{1}) % Parameters not specified
-            algorithms = varargin;
-            params = {};
-            for iAlg = 1:1:length(algorithms)
-                params{iAlg} = 'None';
-            end
+        algorithms = {};
+        params = {};
+        for iVar = 1:1:length(varargin)
+            if ~iscell(varargin{iVar}) % Parameters not specified
+                algorithms{iVar} = varargin{iVar};
+                params{iVar} = 'None';
         else % Additional parameters specified
-            algorithms = {};
-            params = {};
-            for iAlg = 1:1:length(varargin)
-                algorithms{iAlg} = varargin{iAlg}{1};
-                params{iAlg} = varargin{iAlg}{2};
-            end
+                algorithms{iVar} = varargin{iVar}{1};
+                params{iVar} = varargin{iVar}{2};
         end
     end
 
@@ -115,6 +111,7 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
             eOut{iAlg} = [eOut{iAlg} E / eNorm];
         end
     end
+    close(h);
     
     argout = {gOut eOut};
     % Plot resulting energies 
@@ -133,6 +130,6 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
     set(ax ,'yscale','log');
     % Convert algorithm names to plot legend string
     t = legend(cellstr(cellfun(@func2str, algorithms, 'un', 0)));
-    % Allow underscores in function names
+    % Allow underscores in function namesn
     set(t,'interpreter','none'); 
 end
