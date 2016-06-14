@@ -118,12 +118,12 @@ function cifData = cif2mat(readFile)
 %        """
 %        In other words, the apostrophes structure is not respected.
 %
-%     4) The parser looks at the first 10 rows of the data (or at
-%     all the data if smaller than 10 rows are provided). For each
-%     given column, if at least one value V in the first 10 rows
-%     has the 'true' status when '[res, status] = str2num(V)' is
-%     called, all the values in this column are converted to
-%     doubles using str2double.
+%        iv) The parser looks at the first 10 rows of the data (or at
+%        all the data if smaller than 10 rows are provided). For each
+%        given column, if at least one value V in the first 10 rows
+%        has the 'true' status when '[res, status] = str2num(V)' is
+%        called, all the values in this column are converted to
+%        doubles using str2double.
 %
 %  
 % Authors
