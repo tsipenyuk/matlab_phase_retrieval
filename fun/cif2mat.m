@@ -139,11 +139,12 @@ function cifData = cif2mat(readFile)
     tic;
     
     cifData = struct;
-    cifData.outfile = readFile;
+    cifData.type = 'cifData';
+    %cifData.outfile = readFile;
     
     % initialize file
-    FileID = fopen(readFile);
-    rawText = fread(FileID,inf,'*char');
+    fileID = fopen(readFile, 'r');
+    rawText = fread(fileID, inf, '*char');
     
     % parse lines by end-of-lines
     splitLines = strread(rawText, '%s', 'delimiter', '\n');
@@ -158,12 +159,12 @@ function cifData = cif2mat(readFile)
     end 
     
     % parse blocks
-    cifData = struct;
     blockData = {};
     for iBlock = 1:length(blockBounds)-1
         blockData{iBlock} = parseBlock({splitLines{blockBounds(iBlock): ...
                                               blockBounds(iBlock + 1)}});
-        blockName = matlab.lang.makeValidName(cell2mat(fieldnames(blockData{iBlock})));
+        blockName = matlab.lang.makeValidName(cell2mat(...
+            fieldnames(blockData{iBlock})));
         cifData.(blockName) = blockData{iBlock}.(blockName);
     end
     toc;

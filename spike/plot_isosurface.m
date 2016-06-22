@@ -2,11 +2,12 @@ function plot_isosurface(x1,x2,x3,g,n)
 % plot_isosurface - Custom plot for 3D-densities
 %
 % Synopsis
-%   plot_isosurface(x1,x2,x3,g)
+%   plot_isosurface([x1],[x2],[x3], g, [n])
 %
 % Description
 %   Plots transparent isosurfaces corresponding to the density
-%   values max(density) * 10.^(-i), i from 1 to 4.
+%   values max(density) * 10.^(-i), i from 1 to 4. Either 1 (g), 4, or
+%   5 arguments must be passed.
 %
 % Inputs
 %   (meshgrid) x1     First dimension meshgrid
@@ -48,7 +49,13 @@ function plot_isosurface(x1,x2,x3,g,n)
 
     for i = 1:1:n
         a = isolimits(i); % 'a' defines the isosurface limits
-        p = patch(isosurface(x1,x2,x3,g,max(g(:))/a));
+        switch nargin
+          case 1
+            p = patch(isosurface(g,max(g(:))/a));
+          otherwise
+            p = patch(isosurface(x1,x2,x3,g,max(g(:))/a));
+        end
+
         isonormals(x1,x2,x3,g,p);
         p.FaceColor = colorlist(i,:); % Multicolor isosurfaces
         %p.FaceColor = 'red'; % Monochrome isosurfaces

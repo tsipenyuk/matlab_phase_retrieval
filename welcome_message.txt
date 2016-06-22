@@ -34,23 +34,3 @@ may want to try the following:
   % Resulting energies are in eOut{1}, eOut{2}, ...
   >> figure; loglog(eOut{1})
   >> figure; contour(gOut{1})
-
-%%%% (Under developement - for debugging purposes only)%%%%%%%%%%%%%%%%%%%%%%%%
-%  % Check out the wasserstein update:
-%  >> g = m.density;
-%  >> sqrtI = abs(m.ft);
-%  >> update_params.x_list = m.grid.xAxes{1};
-%  >> update_params.k_list = m.grid.kAxes{1};
-%  >> update_params.h = 1e-3;
-%  >> update_params.num_mass_pcs = 50;
-%  >> [g_new, error, w_hat_s, w_com] = wasserstein_1d(g, sqrtI, update_params);
-%
-%  % Check out the object-oriented implementation of these examples:
-%  % Create a one-dimensional example density called 'm'
-%  >> mol_two_gaussians_1d;
-%  % Create an error-reduction algorithm instance called 'er1'
-%  >> alg_er_1d;
-%  % Perform 1000 update steps and plot the result
-%  >> er1 = er1.update(1000);
-%  >> er1 = er1.plot();
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
