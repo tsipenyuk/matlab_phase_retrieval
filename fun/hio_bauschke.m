@@ -131,8 +131,8 @@ function [g_new, error] = hio_bauschke(g, A, beta, pObj, varargin)
         g_new = pObj(pM_g) + one_minus_beta_pM_g ...
                 - pObj(one_minus_beta_pM_g);
     else
-        g_new = pObj(pM_g, varargin) + one_minus_beta_pM_g ...
-                - pObj(one_minus_beta_pM_g, varargin);
+        g_new = pObj(pM_g, varargin{:}) + one_minus_beta_pM_g ...
+                - pObj(one_minus_beta_pM_g, varargin{:});
 
     end
     error = eM(g_new, A);

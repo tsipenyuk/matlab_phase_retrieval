@@ -116,8 +116,8 @@ function [g_new, error] = hio_simplified(g, A, beta, pObj, varargin)
     if nargin <= 4
         g_new = g - pObj(g) - beta * pM_g + (1 + beta) * pObj(pM_g);
     else
-        g_new = g - pObj(g, varargin) - beta * pM_g ...
-                + (1 + beta) * pObj(pM_g, varargin);
+        g_new = g - pObj(g, varargin{:}) - beta * pM_g ...
+                + (1 + beta) * pObj(pM_g, varargin{:});
     end
     error = eM(g_new, A);
 end

@@ -51,7 +51,10 @@ function [g_new, error] = er(g, A, pObj, varargin)
 %   [x1, x2] = ndgrid([-20:0.2:20], [-20:0.2:20]);
 %   g = exp(-x1.^2 - x2.^2);
 %   shift = fix(length(g)/4);
-%   g_sol = circshift(g, [0, shift]) + circshift(g, [0, -shift]);
+%   g_sol = circshift(g, [0, shift]) + circshift(g, [0, -shift]) + ...
+%           circshift(g, [ceil(shift/2), ceil(shift/2)]) + ...
+%           circshift(g, [ceil(2 * shift), ceil(2.5 * shift)]);
+%
 %   A = abs(fftn(g_sol));
 %   g_new = A;
 %   E = [];
@@ -91,7 +94,7 @@ function [g_new, error] = er(g, A, pObj, varargin)
     if nargin <= 3
         g_new = pObj(pM(g, A));
     else
-        g_new = pObj(pM(g, A), varargin);
+        g_new = pObj(pM(g, A), varargin{:});
     end
     
     error = eM(g_new, A);

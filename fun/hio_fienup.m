@@ -1,4 +1,4 @@
-function [g_new, error] = hio_fienup(g, A, beta)
+function [g_new, error] = hio_fienup(g, A, beta, pObj, varargin)
 % hio - Hybrid Input-Output algorithm (Fienup' variant)
 %
 % Synopsis ([]s are optional)
@@ -98,5 +98,10 @@ function [g_new, error] = hio_fienup(g, A, beta)
     
     % Overwrite the values for g < 0
     g_new(pM_g < 0) = g(pM_g < 0) - beta * pM_g(pM_g < 0);
+    if nargin > 3
+        g_new = pObj(g_new, varargin{:});
+    end
     error = eM(g_new, A);
+    
+    
 end

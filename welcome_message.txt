@@ -17,6 +17,7 @@ may want to try the following:
   >> help hio_fienup
   >> help hio_bauschke
 
+  % EXAMPLE 1
   % You may compare the efficiency of these algorithms using the
   % following routine:
   % Define 2D density as two gaussians in the box between -1 and 1
@@ -28,9 +29,27 @@ may want to try the following:
   % Check out the density:
   >> contour(x{1}, x{2}, g)
 
-  % Run phase retrieval with flat initial approximation:
-  >> [gOut eOut] = compare_algorithms(zeros(size(g)), sqrtI, 1000, @er, @hio_bauschke, @hio_simplified, @hio_fienup);
+  % Run phase retrieval with some initial approximation:
+  >> sqrtIpadded = zeros(size(sqrtI));
+  >> sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+  >> gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+  >> [gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_bauschke, @hio_simplified, @hio_fienup);
   % Resulting approximations are in gOut{1}, gOut{2}, ...
   % Resulting energies are in eOut{1}, eOut{2}, ...
   >> figure; loglog(eOut{1})
   >> figure; contour(gOut{1})
+
+  % EXAMPLE 2
+  % Or use real diffraction data from PDB:
+  % Optional: read and plot the desired density
+  >> pdbdata = pdbread('data/2OLX/2olx.pdb'); 
+  >> molviewer(pdbdata); 
+  % Read and plot the diffraction data:
+  >> cifData = cif2mat('data/2OLX/2olx-sf.cif')
+  >> rData = reshapeAndSymmetrizeCifData(cifData);
+  >> sqrtI = rData.F;
+  >> figure; h = slice(permute(rData.H,[2,1,3]), permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]), permute(sqrtIpadded,[2,1,3]), 0, 0, 0);
+  >> sqrtIpadded = zeros(size(sqrtI));
+  >> sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+  >> gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+  >> [gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_fienup);

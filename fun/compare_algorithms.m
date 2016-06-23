@@ -75,16 +75,20 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
         disp('Comparing default algorithms: er and hio_bauschke...');
         algorithms = {@er, @hio_bauschke};
         params = {'None', 'None'};
+        areParamSpecified = {false false};
     else
         algorithms = {};
         params = {};
+        areParamSpecified = {};
         for iVar = 1:1:length(varargin)
             if ~iscell(varargin{iVar}) % Parameters not specified
+                areParamSpecified{iVar} = false;
                 algorithms{iVar} = varargin{iVar};
                 params{iVar} = 'None';
-        else % Additional parameters specified
+            else % Additional parameters specified
+                areParamSpecified{iVar} = true;
                 algorithms{iVar} = varargin{iVar}{1};
-                params{iVar} = varargin{iVar}{2};
+                params{iVar} = {varargin{iVar}{2:end}};
         end
     end
 
@@ -96,40 +100,55 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
     end
 
     h = waitbar(0, '♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙');
+    h2 = figure;
+    ax2 = axes;
     % loop
     for iSteps = 1:1:nSteps
         h = waitbar(iSteps / nSteps);
         for iAlg = 1:1:length(algorithms)
-            if params{iAlg} == 'None'
+            if areParamSpecified{iAlg} == false
                 [gOut{iAlg}, E] = ...
                     algorithms{iAlg}(gOut{iAlg}, sqrtI);
             else
                 [gOut{iAlg}, E] = ...
                     algorithms{iAlg}(gOut{iAlg}, sqrtI, ...
-                                     params{iAlg});
+                                     params{iAlg}{:});
             end
             eOut{iAlg} = [eOut{iAlg} E / eNorm];
+        end
+        if rem(iSteps, 200) == 0
+            cla(ax2);
+            m = ceil(sqrt(length(algorithms)));
+            for iAlg = 1:1:length(algorithms)
+                hold on;
+                E = eOut{iAlg};
+                plot(ax2, E);
+            end
+            set(ax2 ,'xscale','log');
+            set(ax2 ,'yscale','log');
+            % Convert algorithm names to plot legend string
+            t = legend(cellstr(cellfun(@func2str, algorithms, 'un', 0)));
+            % Allow underscores in function namesn
+            set(t,'interpreter','none'); 
         end
     end
     close(h);
     
     argout = {gOut eOut};
     % Plot resulting energies 
-    figure;
-    ax = axes;
-    m = ceil(sqrt(length(algorithms)));
-    for iAlg = 1:1:length(algorithms)
-        hold on;
-        E = eOut{iAlg};
-        plot(E);
-        % Assuming the first algorithm is stabler, use it to fix
-        % axes
-        %axis([0 nSteps 0 1.1 * max(eOut{1}(:))])
-    end
-    set(ax ,'xscale','log');
-    set(ax ,'yscale','log');
-    % Convert algorithm names to plot legend string
-    t = legend(cellstr(cellfun(@func2str, algorithms, 'un', 0)));
-    % Allow underscores in function namesn
-    set(t,'interpreter','none'); 
+    %figure;
+    %ax = axes;
+    %
+    %m = ceil(sqrt(length(algorithms)));
+    %for iAlg = 1:1:length(algorithms)
+    %    hold on;
+    %    E = eOut{iAlg};
+    %    plot(E);
+    %end
+    %set(ax ,'xscale','log');
+    %set(ax ,'yscale','log');
+    %% Convert algorithm names to plot legend string
+    %t = legend(cellstr(cellfun(@func2str, algorithms, 'un', 0)));
+    %% Allow underscores in function namesn
+    %set(t,'interpreter','none'); 
 end

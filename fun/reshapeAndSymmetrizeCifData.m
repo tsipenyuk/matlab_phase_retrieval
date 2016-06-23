@@ -1,78 +1,96 @@
 function out = reshapeAndSymmetrizeCifData(varargin)
-% reshapeCifData - reshape cifData to a structure of ndgrid arrays
+% reshapeAndSymmetrizeCifData - reshape cifData to a structure of ndgrid arrays
 %
 % Synopsis 
-%   [g_new, error] = dmap_optimized(g, sqrtI, [beta], [pObj], [varargin])
+%   out = reshapeAndSymmetrizeCifData(varargin)
 %
 % Description
-%   P
+%   Parces a structure returned by the function
+%   cif2mat. One may either pass the structure and the necessary
+%   field names, or one may pass the value vectors directly. By
+%   default, this function assumes that the diffraction data is
+%   described in the first octant of the 3d-space, and performs the
+%   symmetrization (reflecting the values in the h, k, and l-axes).
 %
 % Inputs ([]s are optional)
-%   (ndarray) g      Current  approximation to the solution of the
-%                    phase retrieval problem
-%   (ndarray) sqrtI      Phase retrieval data (square root of the
-%                    measured intensity)
-%   (scalar)  [beta = 1]
-%                    Update parameter, default value reproduces the
-%                    hybrid input-output update (Bauschke' variant)
-%   (func)    [pObj = @pP]
-%                    handle to the projection onto the object space
-%                    (non-negativity, support, etc.). pObj must
-%                    take g as the first argument, may contain
-%                    optional arguments specified in varargin.
-%   (...)     [varargin]
-%                    optional arguments passed to pObj --- if
-%                    submitted, pObj is  called as pObj(g, varargin)
+%   Variant 1
+%   Necessary arguments:
+%   (struct) cifData    Output of the cif2mat function
+%   Parameter arguments:
+%   Type     Name            Default value  Interpretation
+%   (string) 'limBlockName'  'reflns'       Block where max/min
+%                                           values of the hkl-grid
+%                                           are stored
+%   (string) 'hMinName'      'limit_h_min'
+%   (string) 'hMaxName'      'limit_h_max' 
+%   (string) 'kMinName'      'limit_k_min' 
+%   (string) 'kMaxName'      'limit_k_max' 
+%   (string) 'lMinName'      'limit_l_min' 
+%   (string) 'lMaxName'      'limit_l_max' 
+%   (string) 'valBlockName'  'refln'        Block where indices and
+%                                           measurement values are stored
+%   (string) 'hName'         'index_h' 
+%   (string) 'kName'         'index_k' 
+%   (string) 'lName'         'index_l' 
+%   (string) 'fName'         'F_meas_au'    Intensity values
+%   (string) 'fSigmaName'    'None'         Intensity uncertainty
+%   (bool)   'sym'           true           Should the data be symmetrized?
 %
-% Outputs ([]s are optional)
-%   (ndarray) g_new  Updated approximation to the solution of the 
-%                    phase retrieval problem
-%   (scalar)  error  Error (energy) corresponding to the updated 
-%                    approximation
+%   Variant 2
+%   Parameter arguments:
+%   Type     Name            Default value  Interpretation
+%   (float)  'hMin'                         Min of h-axis
+%   (float)  'hMax'                         Max of h-axis
+%   (float)  'kMin'                         Min of k-axis
+%   (float)  'kMax'                         Max of k-axis
+%   (float)  'lMin'                         Min of l-axis
+%   (float)  'lMax'                         Max of l-axis
+%   (vector) 'h'                            Values of h
+%   (vector) 'k'                            Values of k
+%   (vector) 'l'                            Values of l
+%   (vector) 'f'                            Values of intensity
+%   (vector) 'fSigma'        'None'         Values of uncertainty (optional)
+%   (bool)   'sym'           true           Should the data be
+%                                           symmetrized? (optional)
+%
+% Outputs ([]'s are optional)
+%   (struct) out  structure containing the following fields:
+%   Field name    Contents
+%   out.h         Same as input, vector containing h-entries
+%   out.k         Same as input, vector containing k-entries
+%   out.l         Same as input, vector containing l-entries
+%   out.f         Same as input, vector containing f-entries
+%   [out.fSigma]  Same as input, vector containing uncertainty entries
+%   out.H         ndarray, box from hMin to hMax, from kMin to
+%                 kMax, from lMin to lMax;
+%   out.K         ndarray, --//--
+%   out.L         ndarray, --//--
+%   out.F         ndarray with values f(i) at h(i), k(i), l(i),
+%                 padded with zeros where F is not specified
+%   [out.FSigma]  --//-- uncertainties fSigma(i)
+%
 %
 % Examples
-%   %% 1D, two gaussians
-%   x = [-20:0.2:20];
-%   g_sol = exp(-x.^2);
-%   shift = fix(length(g)/4);
-%   g_sol = circshift(g, [0, shift]) + circshift(g, [0, -shift]);
-%   sqrtI = abs(fftn(g_sol));
-%   g_new = zeros(size(g));
-%   E = [];
-%   for i=1:1:200
-%       [g_new, error] = dmap_optimized(g_new, sqrtI);
-%       E = [E error];
-%   end
-%   plot(E);
-%   plot(g_new);
-%
-%   %% 2D, two gaussians
-%   [x1, x2] = ndgrid([-20:0.2:20], [-20:0.2:20]);
-%   g = exp(-x1.^2 - x2.^2);
-%   shift = fix(length(g)/4);
-%   g_sol = circshift(g, [0, shift]) + circshift(g, [0, -shift]);
-%   sqrtI = abs(fftn(g_sol));
-%   g_new = zeros(size(g));
-%   E = [];
-%   for i=1:1:200
-%       [g_new, error] = dmap_optimized(g_new, sqrtI);
-%       E = [E error];
-%   end
+%  % Example 1
+%  >> cifData = cif2mat('data/2OLX/2olx-sf.cif')
+%  >> rData = reshapeAndSymmetrizeCifData(cifData);
+%  >> sqrtI = rData.F;
+%  >> figure; h = slice(permute(rData.H,[2,1,3]),...
+%  permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]),...
+%  permute(sqrtI,[2,1,3]), 0, 0, 0);
+%   
+%  % Example 2
+%  >> cifData = cif2mat('data/5B3D/5b3d-sf.cif')
+%  >> rData = reshapeAndSymmetrizeCifData(cifData, 'limBlockName',...
+%  'diffrn_reflns', 'fName', 'intensity_meas');
+%  >> sqrtI = rData.F;
+%  >> figure; h = slice(permute(rData.H,[2,1,3]),...
+%  permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]),...
+%  permute(sqrtI,[2,1,3]), 0, 0, 0);
 %
 % See also
-%   er
-%   bio
-%   hio_fienup
-%   dmap
+%   cif2mat
 %   
-% Requirements
-%   pM (modulus projection)
-%   pP (non-negative projection)
-%
-% References
-%   V. Elser, “Phase retrieval by iterated projections,” 
-%   J. Opt. Soc. Am. A., vol. 20, pp. 40–55, 2003.
-%
 % Authors
 %   Arseniy Tsipenyuk <tsipenyu(at)ma.tum.de>
 %
@@ -80,7 +98,7 @@ function out = reshapeAndSymmetrizeCifData(varargin)
 %   See Phase nRetrieval Sandbox root folder.
 %
 % Changes
-%   2016-06-10  First Edition
+%   2016-06-23  First Edition
      
     % Check which data type was passed
     iscifDataPassed = false;
@@ -94,20 +112,20 @@ function out = reshapeAndSymmetrizeCifData(varargin)
     p = inputParser;
     if iscifDataPassed == true
         p.addRequired('cifData', @isstruct);
-        p.addOptional('limBlockName', 'diffrn_reflns', @isstr);
-        p.addOptional('hMinName', 'limit_h_min', @isstr);
-        p.addOptional('hMaxName', 'limit_h_max', @isstr);
-        p.addOptional('kMinName', 'limit_k_min', @isstr);
-        p.addOptional('kMaxName', 'limit_k_max', @isstr);
-        p.addOptional('lMinName', 'limit_l_min', @isstr);
-        p.addOptional('lMaxName', 'limit_l_max', @isstr);
-        p.addOptional('valBlockName', 'refln', @isstr);
-        p.addOptional('hName', 'index_h', @isstr);
-        p.addOptional('kName', 'index_k', @isstr);
-        p.addOptional('lName', 'index_l', @isstr);
-        p.addOptional('fName', 'intensity_meas', @isstr);
-        p.addOptional('fSigmaName', 'None', @isstr);
-        p.addOptional('sym', true, @islogical);
+        p.addParamValue('limBlockName', 'reflns', @isstr);
+        p.addParamValue('hMinName', 'limit_h_min', @isstr);
+        p.addParamValue('hMaxName', 'limit_h_max', @isstr);
+        p.addParamValue('kMinName', 'limit_k_min', @isstr);
+        p.addParamValue('kMaxName', 'limit_k_max', @isstr);
+        p.addParamValue('lMinName', 'limit_l_min', @isstr);
+        p.addParamValue('lMaxName', 'limit_l_max', @isstr);
+        p.addParamValue('valBlockName', 'refln', @isstr);
+        p.addParamValue('hName', 'index_h', @isstr);
+        p.addParamValue('kName', 'index_k', @isstr);
+        p.addParamValue('lName', 'index_l', @isstr);
+        p.addParamValue('fName', 'F_meas_au', @isstr);
+        p.addParamValue('fSigmaName', 'None', @isstr);
+        p.addParamValue('sym', true, @islogical);
     else
         p.addRequired('hMin', @isfloat);
         p.addRequired('hMax', @isfloat);
@@ -119,8 +137,8 @@ function out = reshapeAndSymmetrizeCifData(varargin)
         p.addRequired('k', @isvector);
         p.addRequired('l', @isvector);
         p.addRequired('f', @isvector);
-        p.addOptional('fSigma', 'None', @isvector);
-        p.addOptional('sym', true, @islogical);
+        p.addParamValue('fSigma', 'None', @isvector);
+        p.addParamValue('sym', true, @islogical);
     end
     
     p.parse(varargin{:});
@@ -199,9 +217,9 @@ function out = reshapeAndSymmetrizeCifData(varargin)
     
     if strcmp(fSigma, 'None') ~= true
             for iVal = 1:1:length(out.f)
-                out.F_sigma( out.h(iVal) + h0,  ...
-                             out.k(iVal) + k0,  out.l(iVal) + l0) ...
-                    = out.f_sigma(iVal);
+                out.FSigma( out.h(iVal) + h0,  ...
+                            out.k(iVal) + k0,  out.l(iVal) + l0) ...
+                    = out.fSigma(iVal);
             end
     end
     
