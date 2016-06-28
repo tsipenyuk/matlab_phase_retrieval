@@ -2,54 +2,69 @@
                       <Matlab Phase Retrieval Sandbox>
                            Copyright 2016 TUM, M7
          Tested with Matlab R2016a (9.0.0.341360) 64-bit (glnxa64)
-                                March 31, 2016
+                                June 28, 2016
 --------------------------------------------------------------------------------
 
 Welcome to the Matlab Phase Retrieval Sandbox! If you have started
 your Matlab session in the phase_retrieval root folder
 (i.e. '<your_path>/phase_retrieval'), you should be ready to go. You
-may want to try the following:
+may want to try the following commands in your Matlab-shell:
 
-  % Check out the basic phase retrieval algorithms 
-  % using examples in the documentation:
-  >> help er 
-  >> help bio
-  >> help hio_fienup
-  >> help hio_bauschke
+% Check out the basic phase retrieval updates using examples 
+% from the documentation:
+help er 
+help hio_fienup
+help hio_bauschke
 
-  % EXAMPLE 1
-  % You may compare the efficiency of these algorithms using the
-  % following routine:
-  % Define 2D density as two gaussians in the box between -1 and 1
-  % with appropriate means, covariance matrices, and number of pts:
-  >> [g,sqrtI,x] = two_gaussians(2, 'm1', [0.6 0.3], 'm2', [-0.3 0], ...
-                                'Sigma1', [50 2; 2 10], ...
-                                'Sigma2', [25 -3; 18 10], ...
-                                 'nPts', [200 200]);
-  % Check out the density:
-  >> contour(x{1}, x{2}, g)
+% EXAMPLE 1
+% You may compare the efficiency of these algorithms using the
+% following routine:
+% Define 2D density as two gaussians in the box between -1 and 1
+% with appropriate means, covariance matrices, and number of pts:
+[g,sqrtI,x] = twoGaussians(2, 'm1', [0.6 0.3], 'm2', [-0.3 0], ...
+                           'Sigma1', [50 2; 2 10], ...
+                           'Sigma2', [25 -3; 18 10], ...
+                           'nPts', [200 200]);
+% Check out the density:
+contour(x{1}, x{2}, g)
 
-  % Run phase retrieval with some initial approximation:
-  >> sqrtIpadded = zeros(size(sqrtI));
-  >> sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
-  >> gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
-  >> [gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_bauschke, @hio_simplified, @hio_fienup);
-  % Resulting approximations are in gOut{1}, gOut{2}, ...
-  % Resulting energies are in eOut{1}, eOut{2}, ...
-  >> figure; loglog(eOut{1})
-  >> figure; contour(gOut{1})
+% Run phase retrieval with some initial approximation:
+sqrtIpadded = ones(size(sqrtI));
+sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+[gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_bauschke, @hio_simplified, @hio_fienup);
+% Resulting approximations are in gOut{1}, gOut{2}, ...
+% Resulting energies are in eOut{1}, eOut{2}, ...
+figure; loglog(eOut{1})
+figure; contour(gOut{1})
 
-  % EXAMPLE 2
-  % Or use real diffraction data from PDB:
-  % Optional: read and plot the desired density
-  >> pdbdata = pdbread('data/2OLX/2olx.pdb'); 
-  >> molviewer(pdbdata); 
-  % Read and plot the diffraction data:
-  >> cifData = cif2mat('data/2OLX/2olx-sf.cif')
-  >> rData = reshapeAndSymmetrizeCifData(cifData);
-  >> sqrtI = rData.F;
-  >> figure; h = slice(permute(rData.H,[2,1,3]), permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]), permute(sqrtIpadded,[2,1,3]), 0, 0, 0);
-  >> sqrtIpadded = zeros(size(sqrtI));
-  >> sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
-  >> gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
-  >> [gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_fienup);
+% EXAMPLE 2
+% Or use real diffraction data from PDB:
+% Optional: read and plot the desired density
+pdbdata = pdbread('data/2OLX/2olx.pdb'); 
+molviewer(pdbdata); 
+% Read and plot the diffraction data:
+cifData = cif2mat('data/2OLX/2olx-sf.cif')
+rData = reshapeAndSymmetrizeCifData(cifData);
+sqrtI = rData.F;
+figure; h = slice(permute(rData.H,[2,1,3]), permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]), permute(sqrtI,[2,1,3]), 0, 0, 0);
+% Choose an initial approximation:
+sqrtIpadded = zeros(size(sqrtI));
+sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+[gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_fienup);
+
+
+% EXAMPLE 3
+% Use support and positivity projections as the object constraint
+cifData = cif2mat('data/5B3D/5b3d-sf.cif')
+rData = rData = reshapeAndSymmetrizeCifData(cifData, 'limBlockName', 'diffrn_reflns', 'fName', 'intensity_meas');
+sqrtI = rData.F;
+figure; h = slice(permute(rData.H,[2,1,3]), permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]), permute(sqrtI,[2,1,3]), 0, 0, 0);
+sqrtIpadded = zeros(size(sqrtI));
+sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+S = real(ifftn(sqrtIpadded .* sqrtIpadded))<1e-5;
+gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+% Compare four algorithms: er, er with support projection, hio, hio with support
+% projection
+[gOut eOut] = compare_algorithms(gInit, sqrtI, 2000, @er, {@er, @pPS, S}, {@hio_fienup, 0.7}, {@hio_fienup, 0.7, @pPS, S});

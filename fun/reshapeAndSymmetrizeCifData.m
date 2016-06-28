@@ -186,7 +186,6 @@ function out = reshapeAndSymmetrizeCifData(varargin)
     % If needed, the data is symmetrized, assuming that the
     % provided data lies in the top-front-right (+ + +) octant
     if pR.sym == true
-        disp('dang')
         out.h = [ h -h -h  h  h -h -h  h];
         out.k = [ k  k -k -k  k  k -k -k];
         out.l = [ l  l  l  l -l -l -l -l];
@@ -207,10 +206,7 @@ function out = reshapeAndSymmetrizeCifData(varargin)
     [out.H, out.K, out.L] = ndgrid(hMin:hMax, kMin:kMax, lMin:lMax);
     out.F = zeros(size(out.H));
 
-    disp(length(out.h))
-    disp(length(out.k))
-    disp(length(out.l))
-    disp(length(out.f))
+    disp(['Number of diffraction points: (after symmetrization)' num2str(length(out.h)) '.'])
     for iVal = 1:1:length(out.f)
         out.F(out.h(iVal) + h0, out.k(iVal) + k0, out.l(iVal) + l0) = out.f(iVal);
     end
