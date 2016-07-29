@@ -1,73 +1,60 @@
-function [gSol, sqrtI, X, s] = manyGaussians(nDim, nGauss, varargin)
+function [gSol, sqrtI, x, s] = manyGaussians(nDim, nGauss, varargin)
 % manyGaussians - density corresponding to nGauss uncorrelated gaussians
 %
 % Synopsis ([]s are optional)
-%   [gSol, sqrtI] = two_gaussians(nDim, nGauss, 
-%                                  [lb], [ub], [nPts])
+%   [gSol, sqrtI, X, s] = many_gaussians(nDim, nGauss, 
+%                                        [lb], [ub], [nPts])
 %
 % Description
 %   Returns a density 
 %
 % Inputs ([]s are optional)
-%   (scalar)  nDim   Number of dimensions, set to 1, 2, or 3
-%   (ndarray) [m1]   Mean of the first Gaussian
-%             [ m1 = [-0.5] ] if nDim == 1
-%             [ m1 = [-0.5 -0.5] ] if nDim == 2
-%             [ m1 = [-0.5 -0.5 0] ] if nDim == 3
-%   (ndarray) [m2]   Mean of the second Gaussian
-%             [ m2 = [0.5] ] if nDim == 1
-%             [ m2 = [0.5 0] ] if nDim == 2
-%             [ m2 = [0.5 0 0.5] ] if nDim == 3
-%   (ndarray) [Sigma1]   Width of the first Gaussian
-%             [ Sigma1 = [10] ] if nDim == 1
-%             [ Sigma1 = [10 0; 0 10] ] if nDim == 2
-%             [ Sigma1 = [100 0 0; 0 100 0; 0 0 100] ] if nDim == 3
-%   (ndarray) [Sigma2]   Width of the second Gaussian
-%             [ Sigma2 = [10] ] if nDim == 1
-%             [ Sigma2 = [10 10] ] if nDim == 2
-%             [ Sigma2 = [100 0 0; 0 100 0; 0 0 100] ] if nDim == 3
-%   (ndarray) [nPts] Number of points in each dimension
-%             [ nPts = [100] ] if nDim == 1
-%             [ nPts = [100 100] ] if nDim == 2
-%             [ nPts = [100 100 100] ] if nDim == 3
-%   (ndarray) [lb]   Lower bound of the coordinates
-%             [ lb = [-1] ] if nDim == 1
-%             [ lb = [-1 -1] ] if nDim == 2
-%             [ lb = [-1 -1 -1] ] if nDim == 3
-%   (ndarray) [ub]   Upper bound of the coordinates
-%             [ ub = [1] ] if nDim == 1
-%             [ ub = [1 1] ] if nDim == 2
-%             [ ub = [1 1 1] ] if nDim == 3
-%
-% Outputs ([]s are optional)
-%   (ndarray)     gSol  Molecule density
-%   (ndarray)     sqrtI  Fourier modulus of the molecule density
-%   (cell array)  X      Array of gridvectors xgv (ygv, zgv) at which
-%                        the density is evaluated. May be used to
-%                        calculate meshgrid(X{1}, X{2}) or similar.
+%   (integer) nDim         Number of dimensions, set to 1, 2, or 3
+%   (integer) nGauss       Number of gaussians
+%   (integer) [nPts = 200] Default number of points in the
+%                          discretization grid
+%   (integer) [randomSeed] State of the random seed generator,
+%                          left unchanged by default
+%   (float)   [squeezeBox = 0.5]   
+%                          To ensure that the density at the
+%                          boundaries is zero, means of gaussians
+%                          are generated inside a subset (box) of
+%                          the total discretized domain. The
+%                          distance between the box and the domain
+%                          boundary is defined by squeezeBox.
+%   (float)   [varMean]
+%                          Mean value of the gaussian variance. By
+%                          default chosen to be 1/3 * (expected average
+%                          distance between gaussians).
+%   (float)   [varVar]
+%                          Variance value of the gaussian variance. By
+%                          default chosen to be 1/3 * (expected average
+%                          distance between gaussians).
+% Outputs
+%   (ndarray) gSol         Solution density
+%   (ndarray) sqrtI        Its Fourier transform modulus
+%   (ndarray) x            Cell array of meshgrid coordinates at
+%                          which gSol is evaluated 
+%   (integer) s            Random seed from which the density was generated
 %
 % Examples
 %   %% 1D
-%   [g,~,x] = two_gaussians(1);
-%   plot(x,g);
+%   [g,~,x,s] = manyGaussians(1, 5);
+%   plot(x{1},g);
 %
 %   %% 2D
-%   [g,~,x] = two_gaussians(2);
+%   [g,~,x,s] = manyGaussians(2,5);
+%   contour(x{1},x{2},g);
+%   %% Repeat the same result
+%   [g,~,x,s] = manyGaussians(2, 5, 'randomSeed', s);
+%   contour(x{1},x{2},g);
+%   %% Control gaussian variance parameters   
+%   [g,~,x,s] = manyGaussians(2,5, 'varMean', 0.2, 'varVar', 0.1);
 %   contour(x{1},x{2},g);
 %
-%   %% 2D with specified means, widths, and number of points
-%      [g,~,x] = two_gaussians(2, 'm1', [0.6 0.3], 'm2', [-0.3 0], ...
-%                          'Sigma1', [50 2; 2 10], ...
-%                          'Sigma2', [25 -3; 18 10], ...
-%                          'nPts', [200 200]);
-%   contour(x{1},x{2},g);
 %
 %   %% 3D
-%   [g,~,x] = two_gaussians(3, 'm1', [0.6 0.2 -0.2],...
-%                           'm2', [-0.3 0 0.4], ...
-%                          'Sigma1', [150 12 0; 12 110 0; 0 0 100], ...
-%                          'Sigma2', [250 0 -13; 0 108 10; 13 203 200], ...
-%                          'nPts', [70 70 70]);
+%   [g,~,x,s] = manyGaussians(2,5);
 %   plot_isosurface(x{1},x{2},x{3},g); % requires ../fun
 %
 %
@@ -85,12 +72,12 @@ function [gSol, sqrtI, X, s] = manyGaussians(nDim, nGauss, varargin)
     
     % Average distance between nGauss points placed in a [-1 1] box
     avgDistance = 2 * sqrt(nDim) / nGauss;
-    squeezeVarFactor = 3;
+    squeezeVarFactor = 8;
     
     % Mean of the variance of the gaussians
     varMeanDefault =  avgDistance / squeezeVarFactor;
     % Variance of the variance of the gaussians
-    varVarDefault = avgDistance / squeezeVarFactor;
+    varVarDefault = varMeanDefault / 2;
 
     
     p = inputParser;
@@ -98,7 +85,7 @@ function [gSol, sqrtI, X, s] = manyGaussians(nDim, nGauss, varargin)
     p.addRequired('nGauss', @isfloat);
     p.addParamValue('nPts', nPtsDefault, @isvector);
     p.addParamValue('randomSeed', 0, @isfloat);
-    p.addParamValue('squeezeBox', 3, @isfloat);
+    p.addParamValue('squeezeBox', 0.5, @isfloat);
     p.addParamValue('varMean', varMeanDefault, @isfloat);
     p.addParamValue('varVar', varVarDefault, @isfloat);
     p.parse(nDim, nGauss, varargin{:});
@@ -131,7 +118,7 @@ function [gSol, sqrtI, X, s] = manyGaussians(nDim, nGauss, varargin)
     % Density is evaluated at X
     x = arrayfun(@linspace, lb, ub, pR.nPts, 'un', 0);
     % Generate random means/variances of gaussians
-    m = (1 - pR.squeezeBox * pR.varMean) * (2 * rand([nGauss nDim]) - 1)
+    m = (1 - pR.squeezeBox) * (2 * rand([nGauss nDim]) - 1)
     v = abs(normrnd(pR.varMean, pR.varVar, [nGauss nDim]))
     
 

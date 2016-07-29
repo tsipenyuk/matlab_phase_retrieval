@@ -1,4 +1,4 @@
-function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
+function [gOut eOut M] = compare_algorithms(g, sqrtI, nSteps, varargin)
 % compare_algorithms - run multiple phase-ret. algoritms at once
 %
 % Synopsis ([]s are optional)
@@ -31,23 +31,24 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
 %                         algorithm.
 %
 % Examples
-%   %% 2D, two gaussians
-%   [x1, x2] = ndgrid([-20:0.2:20], [-20:0.2:20]);
-%   g = exp(-x1.^2 - x2.^2);
-%   shift = fix(length(g)/4);
-%   g_sol = circshift(g, [0, shift]) + circshift(g, [0, -shift]);
-%   A = abs(fftn(g_sol));
-%   g_init = g;
+%   %% 2D, five gaussians
+%   [g,sqrtI,x,~] = ...
+%   manyGaussians(2,15,'randomSeed',283362422,'varMean', 0.05,...
+%   'varVar', 0.001); contour(x{1},x{2},g);
+%   sqrtIpadded = ones(size(sqrtI));
+%   sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+%   gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+%    [gOut eOut] = compare_algorithms(gInit, sqrtI, 1000, @er, @hio_bauschke, @hio_simplified, @hio_fienup);
 %
 %   % default comparisson
-%   [gOut eOut] = compare_algorithms(g_init, A, 200);
+%   [gOut eOut] = compare_algorithms(gInit, A, 200);
 %
 %   % compare using two (or more) specific update algorithms:
-%   [gOut eOut] = compare_algorithms(g_init, A, 200, @er, @hio_bauschke);
+%   [gOut eOut] = compare_algorithms(gInit, A, 200, @er, @hio_bauschke);
 %
 %   % Tell hio to use beta=0.6 and explicitely state pP as the
 %   % projection in the object space:
-%   [gOut eOut] = compare_algorithms(g_init, A, 200, {@er, 'None'}, ...
+%   [gOut eOut] = compare_algorithms(gInit, A, 200, @er, ...
 %                                            {@hio_bauschke, 0.6, @pP});
 %   plot(gOut{1}) % Plot the approximation of er
 %   plot(eOut{1}) % Plot the energy descent of er
@@ -69,6 +70,8 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
 %
 % Changes
 %   2016-06-08  First Edition
+    
+    DEBUG = 1;
     
     % Parse input
     if nargin == 3
@@ -102,6 +105,23 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
     h = waitbar(0, '♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙');
     h2 = figure;
     ax2 = axes;
+    
+    %DEBUG
+    if DEBUG == 1
+        sparseFactor = 10;
+        nFrames = fix(nSteps/sparseFactor);
+        
+        global gSol; %global a; global b;
+                     %F(nSteps) = struct('cdata',[],'colormap',[]);
+        hDebug = figure;
+        axDebug = gca();
+        set(hDebug, 'Visible', 'off');
+        
+        M = moviein(nFrames);
+        set(gca,'NextPlot','replacechildren');
+    else 
+        M = {}
+    end
     % loop
     for iSteps = 1:1:nSteps
         h = waitbar(iSteps / nSteps);
@@ -116,6 +136,7 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
             end
             eOut{iAlg} = [eOut{iAlg} E / eNorm];
         end
+        
         if rem(iSteps, 200) == 0
             cla(ax2);
             m = ceil(sqrt(length(algorithms)));
@@ -131,7 +152,45 @@ function [gOut eOut] = compare_algorithms(g, sqrtI, nSteps, varargin)
             % Allow underscores in function namesn
             set(t,'interpreter','none'); 
         end
+        
+        % DEBUG
+        if DEBUG == 1
+            if rem(iSteps,10) == 0
+                iFrame = fix(iSteps/sparseFactor)
+                % Requires global variable 'g' describing the solution
+                % of the problem
+                figure(hDebug);
+                set(hDebug,'visible','off');
+                subplot(3,1,1); 
+                hold on;
+                plot(gSol);
+                plot(gOut{1});
+                legend('solution', 'er approximation')
+                hold off;
+                subplot(3,1,2);
+                hold on;
+                plot(unwrap(fftshift(angle(fftn(gSol)))));
+                yyaxis right;
+                plot(unwrap(fftshift(angle(fftn(gOut{1}))))); 
+                hold off; 
+                legend('solution phase', 'er phase');
+                subplot(3,1,3);
+                plot(fftshift(abs(fftn(gSol))));
+
+                saveas(hDebug, strcat('output/', num2str(iSteps), ...
+                                  '.png'))
+                M(:,iFrame) = getframe;
+                clf(hDebug,'reset');
+            end
+        end
+        % DEBUG
     end
+    
+    if DEBUG == 1
+        close(hDebug)
+        %movie2avi(M, 'output/movie.avi')
+    end
+
     close(h);
     
     argout = {gOut eOut};
