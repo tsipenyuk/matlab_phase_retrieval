@@ -6,10 +6,10 @@ function cifData = cif2mat(readFile)
 %
 % Caveat
 %   Does not comply the formal requierements of the *.cif standard
-%   (http://www.iucr.org/resources/cif/spec/version1.1). In
-%   particular, does not support non-simple data values. (Data
-%   values are split by whitespace. Adjust the 'strsplit' function in
-%   the code to repair this behaviour). Use with caution, adjust to
+%   (http://www.iucr.org/resources/cif/spec/version1.1). Many
+%   features, such as recognition of reserved words such as stop_
+%   or global_, ares not implemented. Only the group delimiter '
+%   (apostrophe) is supported. Use with caution, adjust to
 %   your needs. See detailed parser description below. 
 %
 % Inputs ([]s are optional)
@@ -78,19 +78,22 @@ function cifData = cif2mat(readFile)
 %        from the table.
 %        
 %        iii) For all lines following the numCols lines, the parser
-%        splits each line at whitespaces and writes the first
-%        numCols entries into the corresponding substructures.
+%        splits each line at whitespaces unless there is an
+%        apostrophe in the line; if there is an apostrophe, the
+%        string is split into groups delimited by apostrophes. The
+%        parser then writes the first numCols entries into the
+%        corresponding substructures. 
 %        CAVEAT. The parser does not respect the *cif-convention
-%        that everything between apostrophes counts as a single
-%        table entry. Example. The block
+%        regarding other delimiters, such as [] or ". 
+%        Example. The block 
 %        """
 %        #
 %        loop_
 %        _symmetry_equiv.id
 %        _symmetry_equiv.pos_as_xyz
-%         1  'X,  Y,  Z'
-%         2  '-X+1/2,  -Y,  Z+1/2'
-%         3  'X+1/2,  -Y+1/2,  -Z'
+%         1  "X,  Y,  Z"
+%         2  "-X+1/2,  -Y,  Z+1/2"
+%         3  "X+1/2,  -Y+1/2,  -Z"
 %         #
 %        """
 %        will be parsed to cifData with entries
@@ -105,7 +108,7 @@ function cifData = cif2mat(readFile)
 %         
 %        ans = 
 %        
-%            ''X,'    ''-X+1/2,'    ''X+1/2,'
+%            '"X,'    '"-X+1/2,'    '"X+1/2,'
 %             
 %        """
 %        instead of being parsed to 
@@ -116,10 +119,12 @@ function cifData = cif2mat(readFile)
 %        
 %            'X,  Y,  Z'  '-X+1/2,  -Y,  Z+1/2'  'X+1/2,  -Y+1/2,  -Z'
 %        """
-%        In other words, the apostrophes structure is not respected.
+%        In other words, the delimiters - unless they are
+%        apostrophes - are not respected. To adjust this behaviour,
+%        alter the myStrsplit function in the code.
 %
 %        iv) The parser looks at the first 10 rows of the data (or at
-%        all the data if smaller than 10 rows are provided). For each
+%        all the data if less than 10 rows are provided). For each
 %        given column, if at least one value V in the first 10 rows
 %        has the 'true' status when '[res, status] = str2num(V)' is
 %        called, all the values in this column are converted to
@@ -190,7 +195,8 @@ function blockData = parseBlock(blockLines)
 
 
     % Distinguish between tables (arrays) and scalars
-    if all(blockLines{2}(1:5) == 'loop_')
+    if sum(strfind(blockLines{2}, 'loop_')) > 0 % 'loop_' is in the
+                                                % 2nd line
         % blockName is the string that is repeated before the
         % dot in a block of the *cif file. It does not contain the first '_'
         % character and the dot at the end.
@@ -239,7 +245,7 @@ function blockData = parseBlock(blockLines)
         for iRow = 3 + numCols:1:2 + numCols + numRows
             % Split at whitespace. This function must be adjusted
             % to be consistent with *CIF format
-            currentLine = strsplit(blockLines{iRow}); 
+            currentLine = myStrsplit(blockLines{iRow}); 
                 
             for iCol = 1:1:numCols
                 blockData.(blockName).(structName{iCol}){iRow - numCols - 2} = ...
@@ -290,4 +296,24 @@ function blockData = parseBlock(blockLines)
             end
         end
     end
+end
+
+
+function out = myStrsplit(text)
+% Split proceeding in the following manner:
+%  - if no apostrophes ' are present, split at whitespaces;
+%  - if ' is present, extract groups delimited by this character;
+    if sum(strfind(text, '''')) == 0 % No apostrophes
+        out = strsplit(text);
+    else
+        text = strcat(text,' '); % The following regex catches
+                                 % singleton expressions only if
+                                 % they are followed by whitespace
+        pattern = '([^\s]\s|(''[^'']+''))'; % regex match
+        out = regexp(text, pattern, 'match');
+        for iOut=1:length(out) % throw away 's
+            out{iOut} = out{iOut}(2:end-1);
+        end
+    end
+    
 end

@@ -21,10 +21,7 @@ help hio_bauschke
 % following routine:
 % Define 2D density as two gaussians in the box between -1 and 1
 % with appropriate means, covariance matrices, and number of pts:
-[g,sqrtI,x] = twoGaussians(2, 'm1', [0.6 0.3], 'm2', [-0.3 0], ...
-                           'Sigma1', [50 2; 2 10], ...
-                           'Sigma2', [25 -3; 18 10], ...
-                           'nPts', [200 200]);
+[g,sqrtI,x,s] = manyGaussians(2, 25, 'randomSeed', 56388948);
 % Check out the density:
 contour(x{1}, x{2}, g)
 
@@ -78,3 +75,28 @@ approx = real(ifftn(sqrtI .* sqrtI)); S = approx>1e-5*max(approx);
 gInit = pP(real(ifftn(sqrtI.*sqrtI)));
 [gOut eOut] = compare_algorithms(gInit, sqrtI, 2000, @er, {@hio_fienup, 0.7}, {@hio_fienup, 0.7, @pPS, S});
 figure; hold on; plot(g); plot(gOut{1}); plot(real(gOut{2})); plot(real(gOut{3})); hold off; legend('solution','er','hio','hio w. supp');
+
+
+% Example 5
+% Use real diffraction data from PDB:
+% Optional: read and plot the desired density
+pdbdata = pdbread('data/2y29/2y29.pdb'); 
+molviewer(pdbdata); 
+% Read and plot the diffraction data:
+cifData = cif2mat('data/2y29/2y29-sf.cif')
+rData = reshapeAndSymmetrizeCifData(cifData, 'fName', 'F_meas_au', 'padZeros',1);
+figure; h = slice(permute(rData.H,[2,1,3]),...
+   permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]),...
+   permute(rData.F,[2,1,3]), 0, 0, 0);
+sqrtI = rData.F;
+sqrtIpadded = ones(size(sqrtI));
+sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+[gOut eOut] = compare_algorithms(gInit, sqrtI, 10000, @er, ...
+@hio_fienup);
+figure; hist(gOut{1}(:), 10)
+[X, Y, Z] = meshgrid(1:size(gOut{1},1),1:size(gOut{1},2), 1:size(gOut{1},3));
+% X = X * rData.len_a; Y = Y * rData.len_b; Z = Z * rData.len_c;
+gS = smooth3(gOut{1});
+figure; hist(gS(:),10);
+figure; isosurface(X, Y, Z, permute(smooth3(gOut{1}),[2,1,3]),0.32); axis equal;

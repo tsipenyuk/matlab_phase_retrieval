@@ -71,7 +71,7 @@ function [gOut eOut M] = compare_algorithms(g, sqrtI, nSteps, varargin)
 % Changes
 %   2016-06-08  First Edition
     
-    DEBUG = 1;
+    DEBUG = 0;
     
     % Parse input
     if nargin == 3
@@ -120,7 +120,7 @@ function [gOut eOut M] = compare_algorithms(g, sqrtI, nSteps, varargin)
         M = moviein(nFrames);
         set(gca,'NextPlot','replacechildren');
     else 
-        M = {}
+        M = {};
     end
     % loop
     for iSteps = 1:1:nSteps

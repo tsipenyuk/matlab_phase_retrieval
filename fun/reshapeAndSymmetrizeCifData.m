@@ -4,13 +4,41 @@ function out = reshapeAndSymmetrizeCifData(varargin)
 % Synopsis 
 %   out = reshapeAndSymmetrizeCifData(varargin)
 %
+% Examples
+%  % Example 1
+%  cifData = cif2mat('data/2y29/2y29-sf.cif')
+%  rData = reshapeAndSymmetrizeCifData(cifData, 'fName', 'F_meas_au', 'padZeros',2);
+%  figure; h = slice(permute(rData.H,[2,1,3]),...
+%     permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]),...
+%     permute(sqrtI,[2,1,3]), 0, 0, 0);
+%  sqrtI = rData.F;
+%  sqrtIpadded = ones(size(sqrtI));
+%  sqrtIpadded(~isnan(sqrtI)) = sqrtI(~isnan(sqrtI));
+%  gInit = pP(real(ifftn(sqrtIpadded.*sqrtIpadded)));
+%  [gOut eOut] = compare_algorithms(gInit, sqrtI, 10000, @er, ...
+%  @hio_fienup);
+%  figure; hist(gOut{1}(:), 10)
+%  [X, Y, Z] = meshgrid(1:size(gOut{1},1),1:size(gOut{1},2), 1:size(gOut{1},3));
+%  % X = X * rData.len_a; Y = Y * rData.len_b; Z = Z * rData.len_c;
+%  gS = smooth3(gOut{1});
+%  figure; hist(gS(:),10);
+%  figure; isosurface(X, Y, Z, permute(smooth3(gOut{1}),[2,1,3]),
+%  0.32); axis equal;
+%
 % Description
 %   Parces a structure returned by the function
 %   cif2mat. One may either pass the structure and the necessary
 %   field names, or one may pass the value vectors directly. By
 %   default, this function assumes that the diffraction data is
 %   described in the first octant of the 3d-space, and performs the
-%   symmetrization (reflecting the values in the h, k, and l-axes).
+%   symmetrization.
+%
+% Caveat
+%   Does not respect slanted or transformed cell structure. In
+%   other words, if the angles between cell axes are not equal to
+%   90 degrees or if a cell transformation took place
+%   (cf. _diffrn_reflns_transf_matrix_), the returned coordinates
+%   of out.h, out.k, out.l, out.H, out.K, out.L are not correct. 
 %
 % Inputs ([]s are optional)
 %   Variant 1
@@ -18,15 +46,11 @@ function out = reshapeAndSymmetrizeCifData(varargin)
 %   (struct) cifData    Output of the cif2mat function
 %   Parameter arguments:
 %   Type     Name            Default value  Interpretation
-%   (string) 'limBlockName'  'reflns'       Block where max/min
-%                                           values of the hkl-grid
+%   (string) 'cellBlockName' 'cell'         Block where cell lengths
 %                                           are stored
-%   (string) 'hMinName'      'limit_h_min'
-%   (string) 'hMaxName'      'limit_h_max' 
-%   (string) 'kMinName'      'limit_k_min' 
-%   (string) 'kMaxName'      'limit_k_max' 
-%   (string) 'lMinName'      'limit_l_min' 
-%   (string) 'lMaxName'      'limit_l_max' 
+%   (string) 'aName'         'length_a'
+%   (string) 'bName'         'length_b'
+%   (string) 'cName'         'length_c'
 %   (string) 'valBlockName'  'refln'        Block where indices and
 %                                           measurement values are stored
 %   (string) 'hName'         'index_h' 
@@ -39,12 +63,6 @@ function out = reshapeAndSymmetrizeCifData(varargin)
 %   Variant 2
 %   Parameter arguments:
 %   Type     Name            Default value  Interpretation
-%   (float)  'hMin'                         Min of h-axis
-%   (float)  'hMax'                         Max of h-axis
-%   (float)  'kMin'                         Min of k-axis
-%   (float)  'kMax'                         Max of k-axis
-%   (float)  'lMin'                         Min of l-axis
-%   (float)  'lMax'                         Max of l-axis
 %   (vector) 'h'                            Values of h
 %   (vector) 'k'                            Values of k
 %   (vector) 'l'                            Values of l
@@ -56,9 +74,9 @@ function out = reshapeAndSymmetrizeCifData(varargin)
 % Outputs ([]'s are optional)
 %   (struct) out  structure containing the following fields:
 %   Field name    Contents
-%   out.h         Same as input, vector containing h-entries
-%   out.k         Same as input, vector containing k-entries
-%   out.l         Same as input, vector containing l-entries
+%   out.h         Vector containing h-entries, scaled by cell length
+%   out.k         Vector containing k-entries, scaled by cell length
+%   out.l         Vector containing l-entries, scaled by cell length
 %   out.f         Same as input, vector containing f-entries
 %   [out.fSigma]  Same as input, vector containing uncertainty entries
 %   out.H         ndarray, box from hMin to hMax, from kMin to
@@ -68,25 +86,6 @@ function out = reshapeAndSymmetrizeCifData(varargin)
 %   out.F         ndarray with values f(i) at h(i), k(i), l(i),
 %                 padded with zeros where F is not specified
 %   [out.FSigma]  --//-- uncertainties fSigma(i)
-%
-%
-% Examples
-%  % Example 1
-%  >> cifData = cif2mat('data/2OLX/2olx-sf.cif')
-%  >> rData = reshapeAndSymmetrizeCifData(cifData);
-%  >> sqrtI = rData.F;
-%  >> figure; h = slice(permute(rData.H,[2,1,3]),...
-%  permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]),...
-%  permute(sqrtI,[2,1,3]), 0, 0, 0);
-%   
-%  % Example 2
-%  >> cifData = cif2mat('data/5B3D/5b3d-sf.cif')
-%  >> rData = reshapeAndSymmetrizeCifData(cifData, 'limBlockName',...
-%  'diffrn_reflns', 'fName', 'intensity_meas');
-%  >> sqrtI = rData.F;
-%  >> figure; h = slice(permute(rData.H,[2,1,3]),...
-%  permute(rData.K,[2,1,3]), permute(rData.L,[2,1,3]),...
-%  permute(sqrtI,[2,1,3]), 0, 0, 0);
 %
 % See also
 %   cif2mat
@@ -112,13 +111,10 @@ function out = reshapeAndSymmetrizeCifData(varargin)
     p = inputParser;
     if iscifDataPassed == true
         p.addRequired('cifData', @isstruct);
-        p.addParamValue('limBlockName', 'reflns', @isstr);
-        p.addParamValue('hMinName', 'limit_h_min', @isstr);
-        p.addParamValue('hMaxName', 'limit_h_max', @isstr);
-        p.addParamValue('kMinName', 'limit_k_min', @isstr);
-        p.addParamValue('kMaxName', 'limit_k_max', @isstr);
-        p.addParamValue('lMinName', 'limit_l_min', @isstr);
-        p.addParamValue('lMaxName', 'limit_l_max', @isstr);
+        p.addParamValue('cellBlockName', 'cell', @isstr);
+        p.addParamValue('aName', 'length_a', @isstr);
+        p.addParamValue('bName', 'length_b', @isstr);
+        p.addParamValue('cName', 'length_c', @isstr);
         p.addParamValue('valBlockName', 'refln', @isstr);
         p.addParamValue('hName', 'index_h', @isstr);
         p.addParamValue('kName', 'index_k', @isstr);
@@ -126,52 +122,77 @@ function out = reshapeAndSymmetrizeCifData(varargin)
         p.addParamValue('fName', 'F_meas_au', @isstr);
         p.addParamValue('fSigmaName', 'None', @isstr);
         p.addParamValue('sym', true, @islogical);
+        p.addParamValue('padZeros', 1, @isfloat);
     else
-        p.addRequired('hMin', @isfloat);
-        p.addRequired('hMax', @isfloat);
-        p.addRequired('kMin', @isfloat);
-        p.addRequired('kMax', @isfloat);
-        p.addRequired('lMin', @isfloat);
-        p.addRequired('lMax', @isfloat);
         p.addRequired('h', @isvector);
         p.addRequired('k', @isvector);
         p.addRequired('l', @isvector);
         p.addRequired('f', @isvector);
         p.addParamValue('fSigma', 'None', @isvector);
         p.addParamValue('sym', true, @islogical);
+        p.addParamValue('padZeros', 1, @isfloat);
     end
     
     p.parse(varargin{:});
     pR = p.Results;
     if iscifDataPassed == true
-        hMin = pR.cifData.(pR.limBlockName).(pR.hMinName);
-        hMax = pR.cifData.(pR.limBlockName).(pR.hMaxName);
-        kMin = pR.cifData.(pR.limBlockName).(pR.kMinName);
-        kMax = pR.cifData.(pR.limBlockName).(pR.kMaxName);
-        lMin = pR.cifData.(pR.limBlockName).(pR.lMinName);
-        lMax = pR.cifData.(pR.limBlockName).(pR.lMaxName);
+        len_a = pR.cifData.(pR.cellBlockName).(pR.aName);
+        len_b = pR.cifData.(pR.cellBlockName).(pR.bName);
+        len_c = pR.cifData.(pR.cellBlockName).(pR.cName);
         h = pR.cifData.(pR.valBlockName).(pR.hName);
         k = pR.cifData.(pR.valBlockName).(pR.kName);
         l = pR.cifData.(pR.valBlockName).(pR.lName);
         f = pR.cifData.(pR.valBlockName).(pR.fName);
+
         if strcmp(pR.fSigmaName, 'None') == true
             fSigma = 'None';
         else
             fSigma = pR.(valBlockName).(fSigmaName);
         end
     else
-        hMin = pR.hMin;
-        hMax = pR.hMax;
-        kMin = pR.kMin;
-        kMax = pR.kMax;
-        lMin = pR.lMin;
-        lMax = pR.lMax;
         h = pR.h;
         k = pR.k;
         l = pR.l;
         f = pR.f;
         fSigma = pR.fSigma;
+        len_a = 1;
+        len_b = 1;
+        len_c = 1;
     end
+
+    
+    hMin = min(h);
+    hMax = max(h);
+    kMin = min(k);
+    kMax = max(k);
+    lMin = min(l);
+    lMax = max(l);
+    % Entries outside this radius will be set to zero
+    max_rad = max(max(max(sqrt((h/len_a) .^ 2 +  (k/len_b) .^2 + (l/len_c) .^2))));
+    
+    
+    % Add additional zeros outside of the box 
+    % (Oversample to enforce better resolution)
+    new_pt_h = hMax * pR.padZeros + 1; % Add 1 to ensure that none
+                                       % of the real measurements
+                                       % are overridden
+    new_pt_k = kMax * pR.padZeros;
+    new_pt_l = lMax * pR.padZeros;
+    new_pt_f = 0;
+    h = [h new_pt_h];
+    k = [k new_pt_k];
+    l = [l new_pt_l];
+    f = [f new_pt_f];
+    addedPoints = 1; % One 'fake' point added te ensure oversampling
+
+    % Correct values after oversampling
+    hMin = min(h);
+    hMax = max(h);
+    kMin = min(k);
+    kMax = max(k);
+    lMin = min(l);
+    lMax = max(l);
+
     
     % keep the old info - to be able to access it with unified notation
     out.h = h;
@@ -179,6 +200,9 @@ function out = reshapeAndSymmetrizeCifData(varargin)
     out.l = l;
     out.f = f;
     out.fSigma = fSigma;
+    out.len_a = len_a;
+    out.len_b = len_b;
+    out.len_c = len_c;
     h0 = 1; % Index of the coordinates origin
     k0 = 1; 
     l0 = 1; 
@@ -190,6 +214,7 @@ function out = reshapeAndSymmetrizeCifData(varargin)
         out.k = [ k  k -k -k  k  k -k -k];
         out.l = [ l  l  l  l -l -l -l -l];
         out.f = [ f  f  f  f  f  f  f  f];
+        addedPoints = 8; % 8 fake points, cf (**) above, were added.
         if strcmp(fSigma, 'None') ~= true
             out.fSigma = [ fSigma  fSigma  fSigma  fSigma ...
                            fSigma  fSigma  fSigma  fSigma];
@@ -200,13 +225,14 @@ function out = reshapeAndSymmetrizeCifData(varargin)
         lMin = -lMax;
         h0 = hMax + 1; % Index of the coordinates origin
         k0 = kMax + 1; 
-        l0 = lMax + 1; 
+        l0 = lMax + 1;
     end
 
     [out.H, out.K, out.L] = ndgrid(hMin:hMax, kMin:kMax, lMin:lMax);
-    out.F = zeros(size(out.H));
+    out.F = NaN * zeros(size(out.H));
 
-    disp(['Number of diffraction points: (after symmetrization)' num2str(length(out.h)) '.'])
+    
+    disp(['Number of diffraction points (after symmetrization): ' num2str(length(out.h)-8) '.'])
     for iVal = 1:1:length(out.f)
         out.F(out.h(iVal) + h0, out.k(iVal) + k0, out.l(iVal) + l0) = out.f(iVal);
     end
@@ -219,4 +245,21 @@ function out = reshapeAndSymmetrizeCifData(varargin)
             end
     end
     
+    % Rescale coordinates
+    out.h = out.h * 1 / len_a;
+    out.k = out.k * 1 / len_b;
+    out.l = out.l * 1 / len_c;
+    out.H = out.H * 1 / len_a;
+    out.K = out.K * 1 / len_b;
+    out.L = out.L * 1 / len_c;
+
+    
+    % set outer intenisty NaN-values to zero
+    zero_val_pts = (sqrt(out.H .^ 2 +  out.K .^2 + out.L .^2) >= ...
+                    max_rad);
+    out.F(zero_val_pts) = 0;
+
+
+
+
 end
