@@ -12,7 +12,6 @@ There are no stable releases available yet.
 3. From the folder, launch MATLAB and type `phase_retrieval` for a quick 
 tutorial on how to use this package.
 
-
 ###Licensing
 All the code in the folder 'lib' and folders therein is developed by 
 other parties.
