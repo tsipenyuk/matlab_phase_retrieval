@@ -6,6 +6,12 @@ directory 'lib' and its subdirectories is subject to other licenses. The
 corresponding licensing information may be found in 'README.md' files 
 in the directory 'lib' and directories therein.
 
+The following license does not apply to the parts of this software stored
+in the directory 'data' and its subdirectories. The files stored in the
+directory 'data' and its subdirectories were taken from the online-resource
+http://www.rcsb.org/. These files were slightly altered to simplify their
+compliance with matlab_phase_retrieval source code, but the data within
+was not changed.
 
 The MIT License (MIT)
 
