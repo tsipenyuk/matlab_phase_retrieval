@@ -1,6 +1,8 @@
 ##Matlab Phase Retrieval Sandbox
 ----------------------------------------------------------------------------
 
+This project is no longer supported.
+
 Matlab Phase Retrieval Sandbox is a collection of scripts and utilities for
 developement and testing of phase retrieval algorithms. 
 
